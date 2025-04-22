@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load dict_utils %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Gestione convocazioni – {{ match.date }} {{ match.time }}</h2>
+
+  <div class="mb-4">
+    <div class="progress mb-2">
+      <div id="progress-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%">
+        <span id="convocation-count">0/{{ match.players_per_team|add:match.players_per_team }}</span>
+      </div>
+    </div>
+    <p id="convocation-status" class="text-center text-muted small mb-3">Seleziona i giocatori da convocare</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-playon w-100">Salva convocazioni</button>
+
+      <div class="row row-cols-1 row-cols-md-3 g-3 mt-1">
+        {% for player in players %}
+          {% with status=convocations_status|get_item:player.id %}
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ player.name }}</strong>
+                    {% if status == 'confirmed' and player.id not in convoked_players_ids %}
+                      <br><span class="text-warning">🟡 Disponibile (in attesa)</span>
+                    {% endif %}
+                    {% if request.user == match.created_by and player.id in riproposti %}
+                      <br><small class="text-warning">🔁 (di nuovo disponibile)</small>
+                    {% endif %}
+
+                  {% if player.role %}
+                    <small class="text-muted">({{ player.role.name }})</small>
+                  {% endif %}
+
+                  {% if status == 'declined' %}
+                    {% if player.id in declined_after_accept %}
+                      <br><span class="text-danger">⛔ Non più disponibile</span>
+                    {% else %}
+                      <br><span class="text-danger">❌ Non disponibile</span>
+                      {% if request.user == match.created_by and player.id in riproposti %}
+                        <br><small class="text-warning">🔁 (di nuovo disponibile)</small>
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
+                </div>
+                <div class="text-end">
+                  {% if status == 'confirmed' %}
+                    <span class="text-success me-2">✅</span>
+                  {% elif status == 'invited' %}
+                    <span class="text-muted me-2">🕓 In attesa</span>
+                  {% endif %}
+                  
+                      <input type="checkbox" name="convoked_players" value="{{ player.id }}"
+                        {% if status == 'confirmed' or player.id in pre_checked_by_organizer %}checked{% endif %}
+                        {% if status == 'declined' and player.id not in riproposti %}disabled{% endif %}>
+
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    </form>
+  </div>
+</div>
+<style>
+  input[type="checkbox"] {
+    transform: scale(1.5);
+    margin: 5px;
+  }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const checkboxes = document.querySelectorAll('input[name="convoked_players"]');
+  const progressBar = document.getElementById("progress-bar");
+  const countDisplay = document.getElementById("convocation-count");
+  const statusText = document.getElementById("convocation-status");
+
+  function updateBar() {
+    const total = {{ match.players_per_team|add:match.players_per_team }};
+    const selected = [...checkboxes].filter(cb => cb.checked).length;
+    const percent = Math.min((selected / total) * 100, 100);
+    progressBar.style.width = percent + "%";
+    countDisplay.textContent = `${selected}/${total}`;
+
+    if (selected < total) {
+      progressBar.classList.remove("bg-danger", "bg-success");
+      progressBar.classList.add("bg-warning");
+      statusText.textContent = "Ancora incompleta";
+    } else if (selected == total) {
+      progressBar.classList.remove("bg-warning", "bg-danger");
+      progressBar.classList.add("bg-success");
+      statusText.textContent = "Lista completa";
+    } else {
+      progressBar.classList.remove("bg-warning", "bg-success");
+      progressBar.classList.add("bg-danger");
+      statusText.textContent = "Sovrannumero!";
+    }
+  }
+
+  checkboxes.forEach(cb => cb.addEventListener("change", updateBar));
+  updateBar();
+});
+</script>
+{% endblock %}

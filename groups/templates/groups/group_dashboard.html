@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% load crispy_forms_tags %}
+{% load group_extras %}
+{% block title %}Gestione Gruppi{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+  <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 60px;">
+  <h2 class="mt-2">Gestione <span class="text-primary">Gruppi</span></h2>
+  <p class="text-muted">Crea, modifica e gestisci i tuoi giocatori e ruoli</p>
+</div>
+<div class="container py-4">
+  
+
+  {% if groups %}
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" id="groupTabs" role="tablist">
+      {% for group in groups %}
+      <li class="nav-item" role="presentation">
+        <div class="d-flex align-items-center">
+          <button class="nav-link d-flex align-items-center justify-content-between gap-2 {% if forloop.first %}active{% endif %}"
+                  id="group-tab-{{ group.id }}"
+                  data-bs-toggle="tab"
+                  data-bs-target="#group-{{ group.id }}"
+                  type="button"
+                  role="tab"
+                  style="max-width: 200px;">
+            <span class="text-truncate">{{ group.name }}</span>
+          </button>
+
+          <form method="post"
+                action="{% url 'group_delete' group.id %}"
+                onsubmit="return confirm('Eliminare il gruppo {{ group.name }}?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-1" title="Elimina gruppo">
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+      <li class="nav-item  text-nowrap" role="presentation" style="position: relative;">
+        <a href="{% url 'group_create' %}" class="nav-link text-success fw-bold">
+          <i class="bi bi-plus-circle"></i> Nuovo gruppo
+        </a>
+      </li>
+    </ul>
+
+    <!-- Tab contents -->
+    <div class="tab-content">
+      {% for group in groups %}
+        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="group-{{ group.id }}" role="tabpanel">
+
+          <div class="group-tab-content">
+            
+            <!-- Colonna: elenco giocatori -->
+            <div class="player-list-wrapper">
+              <h5 class="mb-3">Giocatori in {{ group.name }}</h5>
+              <!-- Filtro ruolo -->
+              <form method="get" class="mb-3">
+                <div class="input-group" style="max-width: 300px;">
+                  <label class="input-group-text" for="role_filter_{{ group.id }}">Filtra per ruolo</label>
+                  <select name="role_filter_{{ group.id }}" id="role_filter_{{ group.id }}" class="form-select" onchange="this.form.submit()">
+                    {% with selected_id=selected_roles_by_group|dict_get:group.id %}
+                      <option value="" {% if not selected_id %}selected{% endif %}>Tutti</option>
+                      <option value="none" {% if selected_id == 'none' %}selected{% endif %}>Senza ruolo</option>
+                      {% for role in roles_by_group|dict_get:group.id %}
+                        <option value="{{ role.id }}" {% if selected_id == role.id|stringformat:"s" %}selected{% endif %}>{{ role.name }}</option>
+                      {% endfor %}
+                    {% endwith %}
+                  </select>
+                </div>
+              </form>
+              
+              {% if group.player_set.all %}
+              
+              <ul class="list-group player-list" id="player-list-{{ group.id }}">
+                {% for player in filtered_players_by_group|dict_get:group.id|dictsort:"name" %}
+
+                <li class="list-group-item d-flex justify-content-between align-items-center" data-role="{{ player.role|default:"__none__" }}">
+                  <div>
+                    <strong>{{ player.name }}</strong>
+                    <small>{{ player.role|default:"Senza ruolo" }} – {{ player.birth_date|date:"d/m/Y" }}</small>
+                  </div>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <!-- Modifica giocatore -->
+                    <button class="btn  btn-outline-secondary icon-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editPlayerModal-{{ player.id }}" 
+                            title="Modifica">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <!-- Cancellazione giocatore -->
+                    <form method="post" 
+                          action="{% url 'player_delete' player.id %}" 
+                          class="d-inline-block"
+                          onsubmit="return confirm('Eliminare il giocatore {{ player.name }}?')">
+                      {% csrf_token %}
+                      <button type="submit" 
+                              class="btn btn-outline-danger icon-btn" 
+                              title="Elimina">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                   </div>
+                </li>
+                {% empty %}
+                  <li class="list-group-item">Nessun giocatore trovato.</li>
+  
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>Nessun giocatore ancora.</p>
+              {% endif %}
+            </div>
+
+            <!-- Colonna: form aggiunta giocatore -->
+            <div class="player-form-wrapper">
+              <h5 class="mb-3">Aggiungi giocatore</h5>
+              <form method="post">
+                {% csrf_token %}
+                {{ form.name|as_crispy_field }}
+                {{ form.birth_date|as_crispy_field }}
+                <div class="mb-3">
+                  <label class="form-label">Ruolo</label>
+                  <div class="input-group">
+                    {{ form.role }}
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addRoleModal-{{ group.id }}" title="Aggiungi ruolo">
+                      <i class="bi bi-plus-circle"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRoleModal-{{ group.id }}" title="Elimina ruolo selezionato">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-outline-playon edit-role-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editRoleModal-{{ group.id }}" 
+                            title="Modifica ruolo selezionato">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                  </div>
+                </div>
+                <input type="hidden" name="group_id" value="{{ group.id }}">
+                <button type="submit" class="btn btn-playon mt-2">Aggiungi</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Modali modifica per ogni giocatore -->
+          {% for player in group.player_set.all %}
+          <div class="modal fade" id="editPlayerModal-{{ player.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="post" action="{% url 'player_update' player.id %}">
+                  {% csrf_token %}
+                  <div class="modal-header">
+                    <h5 class="modal-title">Modifica {{ player.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    {{ player_forms|dict_get:player.id|crispy }}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-playon" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-playon">Salva</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+
+          <!-- Modale aggiunta ruolo -->
+          <div class="modal fade" id="addRoleModal-{{ group.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="role">
+                  <input type="hidden" name="group_id" value="{{ group.id }}">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Aggiungi nuovo ruolo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    {{ role_forms|dict_get:group.id|crispy }}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-playon" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-playon">Salva ruolo</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <!-- Modale cancellazione ruolo -->
+          <div class="modal fade" id="deleteRoleModal-{{ group.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="post" action="{% url 'role_delete_selected' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="group_id" value="{{ group.id }}">
+                  <input type="hidden" name="role_id" id="modal-role-id-{{ group.id }}">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Conferma eliminazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    Vuoi davvero eliminare il ruolo selezionato?
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-playon" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-danger">Elimina</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <!-- Modale modifica ruolo -->
+          <div class="modal fade" id="editRoleModal-{{ group.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="post" action="{% url 'role_edit_selected' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="group_id" value="{{ group.id }}">
+                  <input type="hidden" name="role_id" id="modal-edit-role-id-{{ group.id }}">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Modifica ruolo selezionato</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <input type="text" 
+                           class="form-control" 
+                           name="role_name" 
+                           id="modal-edit-role-name-{{ group.id }}">
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-playon" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-warning">Modifica</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <ul class="nav nav-tabs mb-3" id="groupTabs" role="tablist">
+      <li class="nav-item  text-nowrap" role="presentation" style="position: relative;">
+        <a href="{% url 'group_create' %}" class="nav-link text-success fw-bold">
+          <i class="bi bi-plus-circle"></i> Nuovo gruppo
+        </a>
+      </li>
+    </ul>
+    <p>Non hai ancora creato gruppi.</p>
+  {% endif %}
+</div>
+
+<style>
+  .group-tab-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .player-list-wrapper {
+    flex: 1 1 60%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 15px;
+    background: #f8f9fa;
+  }
+  .player-form-wrapper {
+    flex: 1 1 35%;
+    min-width: 300px;
+  }
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .icon-btn i {
+    font-size: 16px;
+  }
+  @media (max-width: 576px) {
+    .player-list-wrapper {
+      padding: 10px;
+      font-size: 0.95rem;
+    }
+  }
+  
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('select[id^="select-role-"]').forEach(select => {
+      const groupId = select.id.replace('select-role-', '');
+      const modalInputDelete = document.getElementById(`modal-role-id-${groupId}`);
+      const modalInputEdit = document.getElementById(`modal-edit-role-id-${groupId}`);
+      const modalInputEditName = document.getElementById(`modal-edit-role-name-${groupId}`);
+  
+      // Cancellazione (🗑️)
+      if (modalInputDelete) {
+        modalInputDelete.value = select.value;
+        select.addEventListener('change', () => {
+          modalInputDelete.value = select.value;
+          if (modalInputEdit) modalInputEdit.value = select.value;
+          if (modalInputEditName) modalInputEditName.value = select.options[select.selectedIndex].text;
+        });
+      }
+  
+      // Modifica (✏️)
+      const editBtn = select.parentElement.querySelector('.edit-role-btn');
+      if (editBtn) {
+        editBtn.addEventListener('click', () => {
+          if (modalInputEdit && modalInputEditName) {
+            modalInputEdit.value = select.value;
+            modalInputEditName.value = select.options[select.selectedIndex].text;
+          }
+        });
+      }
+    });
+  });
+</script>
+{% endblock %}

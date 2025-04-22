@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load group_extras %}
+
+{% block content %}
+<div class="container py-4">
+<h2 class="mb-4">I tuoi gruppi</h2>
+<h4>Gruppi ai quali sei iscritto</h4>
+  {% if joined_groups %}
+    <ul class="list-group mb-4">
+      {% for group in joined_groups %}
+        <li class="list-group-item">
+            <a href="{% url 'match_list'  %}">{{ group.name }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">Non sei ancora stato accettato in nessun gruppo.</p>
+  {% endif %}
+
+  {% if created_groups %}
+    
+
+  {% endif %}
+
+{% if created_groups %}
+  <h4>Gruppi che hai creato</h4>
+<ul class="list-group">
+    {% for group in created_groups %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          {{ group.name }}
+          {% if group.id in requested_group_ids %}
+            <span class="badge bg-warning text-dark">Richiesta inviata</span>
+          {% endif %}
+        </div>
+        {% if group.id in pending_association %}
+          
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#associatePlayerModal{{ group.id }}">
+                Associa profilo Player
+            </button>
+        
+        <!-- Modale -->
+        <div class="modal fade" id="associatePlayerModal{{ group.id }}" tabindex="-1" aria-labelledby="associatePlayerModalLabel{{ group.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="associatePlayerModalLabel{{ group.id }}">Scegli il tuo profilo Player</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                <div class="modal-body">
+                {% with players=players_by_group|dict_get:group.id %}
+                    {% if players %}
+                    <ul class="list-group">
+                        {% for player in players %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ player.name }} – {{ player.role.name }}
+                            <form method="post" action="{% url 'assign_player' 0  %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="group_id" value="{{ group.id }}">
+                            <input type="hidden" name="player_id" value="{{ player.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success">Associa</button>
+                            </form>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="alert alert-warning">Non ci sono profili Player disponibili in questo gruppo.</div>
+                    {% endif %}
+                {% endwith %}
+                </div>
+            </div>
+            </div>
+        </div>
+        {% endif %}
+      </li>
+      
+    {% endfor %}
+  </ul>
+{% endif %}
+</div>
+{% endblock %}

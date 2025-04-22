@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Elenco Gruppi Disponibili{% endblock %}
+
+{% block content %}
+
+
+<h2>Gruppi disponibili</h2>
+<ul>
+  {% for group in groups %}
+    <li>
+      {{ group.name }} creato da {{group.created_by.first_name}} {{group.created_by.last_name}}  {{group.created_at}}
+      {% if group.id not in requested_ids %}
+        <a href="{% url 'send_join_request' group.id %}">Richiedi accesso</a>
+      
+      {% endif %}
+      {% if group.id in pending_association %}
+        <span class="badge bg-secondary">In attesa di approvazione</span>
+      {% endif %}
+      {% if group.id in accepted_ids %}
+        <span class="badge bg-success">Iscritto</span>
+      {% endif %}
+      {% if group.id in rejected_ids %}
+        <a href="{% url 'send_join_request' group.id %}" class="btn btn-sm btn-outline-primary">🔁 Richiedi di nuovo</a>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock content %}

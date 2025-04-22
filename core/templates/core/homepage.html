@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - PlayOn{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="text-center mb-5">
+    <img src="{% static 'img/playon_welcome.png' %}" alt="Benvenuto in PlayOn" class="img-fluid mb-4" style="max-width: 500px;">
+    <h2 class="fw-bold">Benvenuto su <span class="text-primary">PlayOn</span>, {{ user.first_name }}!</h2>
+    <p class="text-muted">Gestisci partite, gruppi e voti con stile ⚽</p>
+  </div>
+
+  <div class="row g-4">
+    <!-- I tuoi gruppi -->
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column justify-content-between">
+          <div>
+            <h5 class="card-title"><i class="bi bi-person-check"></i> I tuoi gruppi</h5>
+            <p class="card-text">
+              {% if user_groups or own_groups %}
+                Visualizza i gruppi a cui sei iscritto e partecipa alle partite.
+              {% else %}
+                Non appartieni ancora a nessun gruppo.
+              {% endif %}
+            </p>
+          </div>
+          {% if user_groups or own_groups %}
+            <a href="{% url 'user_groups' %}" class="btn btn-playon mt-3">Vai</a>
+          {% else %}
+            <button class="btn btn-outline-secondary mt-3 disabled">Vai</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Gruppi disponibili -->
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column justify-content-between">
+          <div>
+            <h5 class="card-title"><i class="bi bi-search"></i> Gruppi disponibili</h5>
+            <p class="card-text">Scopri altri gruppi e invia la tua richiesta.</p>
+          </div>
+          <a href="{% url 'available_groups' %}" class="btn btn-outline-playon mt-3">Vai</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Richieste inviate -->
+  <div class="card mt-5 shadow-sm">
+    <div class="card-header bg-secondary text-white">Richieste di iscrizione inviate</div>
+    <div class="card-body">
+      {% if pending_requests %}
+        <div class="overflow-auto" style="max-height: 400px;">
+          <ul class="list-group">
+            {% for req in pending_requests|slice:":6" %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ req.group.name }}</strong><br>
+                  Inviata il {{ req.created_at|date:"d/m/Y H:i" }}
+                </div>
+                <span class="badge 
+                  {% if req.status == 'pending' %}bg-warning text-dark
+                  {% elif req.status == 'accepted' %}badge-playon
+                  {% elif req.status == 'rejected' %}bg-danger
+                  {% endif %}">
+                  {{ req.get_status_display }}
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% if pending_requests|length > 6 %}
+          <div class="text-end mt-2">
+            <a href="{% url 'user_groups' %}" class="btn btn-outline-playon btn-sm">Mostra tutte</a>
+          </div>
+        {% endif %}
+      {% else %}
+        <p class="text-muted">Non hai richieste in sospeso.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

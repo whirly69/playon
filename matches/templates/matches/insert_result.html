@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Inserisci risultato{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2>Inserisci risultato per {{ match.group.name }} – {{ match.date }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-playon mt-2">Salva</button>
+  </form>
+</div>
+{% endblock %}

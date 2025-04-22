@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load dict_utils %}
+
+{% block title %}Vota i tuoi compagni{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="text-center mb-4">
+    <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 50px;">
+    <h2 class="mt-2">Votazione Post-Partita <span class="text-primary">Gruppo</span></h2>
+    <p class="text-muted">Consulta performance e voti dei tuoi compagni</p>
+  </div>
+  
+  <form method="post">
+    {% csrf_token %}
+    <div class='row'>
+      <div class='col-md-6'>
+        <h2 class="text-danger fw-bold">Rossi</h2>
+        {% for player in squadra1 %}
+          <div class="mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="me-3 fw-bold" style="min-width: 160px;">{{ player.name }}</span>
+              <div class="star-rating" data-player-id="{{ player.id }}">
+              {% for i in "12345" %}
+                <i class="bi bi-star-fill star"
+                  data-value="{{ i }}"
+                  data-player-id="{{ player.id }}"
+                  style="cursor: pointer; font-size: 1.5rem;"
+                ></i>
+              {% endfor %}
+              <input type="hidden" name="vote_{{ player.id }}" id="vote_{{ player.id }}" value="{{ existing_votes|get_item:player.id|default:3 }}">
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class='col-md-6'>
+        <h2 class="text-primary fw-bold">Blu</h2>
+        {% for player in squadra2 %}
+          <div class="mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="me-3 fw-bold" style="min-width: 160px;">{{ player.name }}</span>
+              <div class="star-rating" data-player-id="{{ player.id }}">
+              {% for i in "12345" %}
+                <i class="bi bi-star-fill star"
+                  data-value="{{ i }}"
+                  data-player-id="{{ player.id }}"
+                  style="cursor: pointer; font-size: 1.5rem;"
+                ></i>
+              {% endfor %}
+              <input type="hidden" name="vote_{{ player.id }}" id="vote_{{ player.id }}" value="{{ existing_votes|get_item:player.id|default:3 }}">
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>  
+    <hr class="my-4">
+
+    <div class="mb-4">
+      <label class="form-label">Vota l'MVP</label>
+      <select class="form-select" name="mvp" required>
+        <option value="">Scegli il migliore</option>
+        {% for player in squadra1|add:squadra2 %}
+          <option value="{{ player.id }}">{{ player.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-4">
+      {% if not user_has_commented %}
+        <label class="form-label">Commento post-partita</label>
+        <textarea class="form-control" name="commento" rows="3"></textarea>
+      {% else %}
+        <div class="alert bg-light border border-info">Hai già lasciato un commento.</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-playon">Invia voti e commento</button>
+    
+    
+  </form>
+  
+</div>
+
+<style>
+  .star-rating .star {
+    color: lightgray;
+  }
+  .star-rating .star.selected {
+    color: gold;
+  }
+  
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.star-rating').forEach(container => {
+      const playerId = container.dataset.playerId;
+      const currentVote = parseInt(document.getElementById(`vote_${playerId}`).value);
+
+      // Colora stelle iniziali
+      highlightStars(container, currentVote);
+
+      // Gestione click
+      container.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', function () {
+          const value = parseInt(this.dataset.value);
+          document.getElementById(`vote_${playerId}`).value = value;
+          highlightStars(container, value);
+        });
+      });
+    });
+
+    function highlightStars(container, vote) {
+      container.querySelectorAll('.star').forEach(star => {
+        const val = parseInt(star.dataset.value);
+        if (val <= vote) {
+          star.classList.add('selected');
+        } else {
+          star.classList.remove('selected');
+        }
+      });
+    }
+  });
+</script>
+
+{% endblock %}

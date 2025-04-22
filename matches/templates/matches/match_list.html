@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% load dict_utils %}
+{% block title %}Le tue Partite{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+    <div class="text-center mb-4">
+      <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 60px;">
+      <h2 class="mt-2">📅 <span class="text-primary">Le tue Partite</span></h2>
+      <p class="text-muted small">Controlla i risultati, gestisci convocazioni e vota i tuoi compagni!</p>
+    </div>
+    
+  {% if user.role == 'organizer' %}
+    <div class="mb-3 text-end">
+      <a href="{% url 'match_create' %}" class="btn btn-playon">
+        <i class="bi bi-plus-circle"></i> Crea nuova partita
+      </a>
+    </div>
+  {% endif %}
+
+  <div class="btn-group mb-3" role="group">
+    <a href="{% url 'match_list' %}?filter=all" class="btn btn-outline-playon {% if filter == 'all' %}active{% endif %}">Tutte</a>
+    <a href="{% url 'match_list' %}?filter=future" class="btn btn-outline-playon {% if filter == 'future' %}active{% endif %}">Future</a>
+    <a href="{% url 'match_list' %}?filter=my" class="btn btn-outline-playon {% if filter == 'my' %}active{% endif %}">Solo mie</a>
+  </div>
+
+  {% if matches %}
+    <div class="list-group">
+      {% for match in matches %}
+        <div class="list-group-item mb-2" id="match-{{ match.id }}">
+          <div class="row">
+            <div class="col-lg-5 col-md-6">
+              <h5>
+                {{ match.group.name }}
+                {% if match.is_cancelled %}
+                  <span class="badge bg-danger text-light text-light ms-2"><i class="bi bi-x-circle-fill"></i> Annullata</span>
+                {% elif match.score_team1 != None and match.score_team2 != None %}
+                  <span class="badge badge-playon ms-2"><i class="bi bi-check-circle-fill"></i> Giocata</span>
+                {% else %}
+                  <span class="badge bg-light text-dark border ms-2"><i class="bi bi-clock-fill"></i> Programmata</span>
+                {% endif %}
+              </h5>
+              <small class="text-muted">
+                📅 {{ match.date }} ore {{ match.time|time:"H:i" }}<br>
+                🏟️ {{ match.structure.name }}<br>
+                👥 Convocati: {{ match.matchconvocation_set.count }}<br>
+                🧑‍🤝‍🧑 Squadre: {{ match.matchteamassignment_set.count }} giocatori
+              </small>
+            </div>
+
+            <div class="col-lg-4 col-md-6 text-center">
+              {% if match.score_team1 != None and match.score_team2 != None %}
+                <div class="row text-center mt-2">
+                  <div class="col-6">
+                    <div class="text-danger fw-bold">ROSSI</div>
+                    <div class="fs-4">{{ match.score_team1 }}</div>
+                    <ul class="list-unstyled small mt-2">
+                      {% for perf in match.matchperformance_set.all %}
+                        {% if perf.goals > 0 and perf.player.matchteamassignment_set.first.team == "team1" %}
+                          <li>{{ perf.player.name }} ×{{ perf.goals }}</li>
+                        {% endif %}
+                        
+
+                      {% endfor %}
+                      
+                    </ul>
+                    
+                  </div>
+                  <div class="col-6">
+                    <div class="text-primary fw-bold">BLU</div>
+                    <div class="fs-4">{{ match.score_team2 }}</div>
+                    <ul class="list-unstyled small mt-2">
+                      {% for perf in match.matchperformance_set.all %}
+                        {% if perf.goals > 0 and perf.player.matchteamassignment_set.first.team == "team2" %}
+                          <li>{{ perf.player.name }} ×{{ perf.goals }}</li>
+                        {% endif %}
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% with match_mvp_map|get_item:match.id as mvp %}
+                          {% if mvp %}
+                            <div class="mt-2 small text-success">
+                              🏆 MVP: <strong>{{ mvp.name }}</strong> ({{ mvp.votes }} voti)
+                            </div>
+                          {% endif %}
+                        {% endwith %}
+                </div>
+              {% else %}
+                <div id="result-form-container-{{ match.id }}"></div>
+              {% endif %}
+            </div>
+
+            <div class="col-lg-3 col-md-12 d-flex flex-column flex-md-row flex-lg-column gap-1 align-items-end align-items-md-center align-items-lg-end">
+              {% if user == match.created_by %}
+                {% if match.matchteamassignment_set.count >= match.players_per_team|add:match.players_per_team %}
+                  {% if not match.is_cancelled %}
+                  <button class="btn btn-sm btn-outline-success w-100 w-md-50 
+                    {% if match.score_team1 is not None and match.score_team2 is not None %}disabled{% endif %}" 
+                    onclick="loadResultForm({{ match.id }}, this)">📥 Inserisci risultato</button>
+                    {%endif%}
+                  {% endif %}
+                  {% if match.is_cancelled %}
+                    <button class="btn btn-sm btn-outline-secondary w-100 w-md-50" disabled>✏️ Gestisci convocati (partita annullata)</button>
+                  {% else %}
+                    <a href="{% url 'manage_convocations' match.id %}" class="btn btn-sm btn-outline-primary w-100 w-md-50 
+                    {% if match.score_team1 is not None and match.score_team2 is not None %}disabled{% endif %}">✏️ Gestisci convocati</a>
+                  {% endif %}
+                
+                  {% if match.score_team1 != None and match.score_team2 != None %}
+                    <button class="btn btn-sm btn-outline-secondary w-100 w-md-50" disabled>❌ Annulla (già giocata)</button>
+                    {%  if user|is_confirmed_convocated:match and match.score_team1 != None and match.score_team2 != None %}
+                      <a href="{% url 'review_match_votes' match.id %}" class="btn btn-sm btn-outline-info w-100 w-md-50">📊 Statistiche e voti</a>
+                          {% if match_has_comments|get_item:match.id %}
+                            <a href="{% url 'match_comments' match.id %}" class="btn btn-sm btn-outline-secondary w-100 w-md-50 ">
+                              💬 Mostra commenti
+                            </a>
+                          {% endif %}
+                    {% endif %}
+
+                  {% else %}
+                    {% if match.is_cancelled %}
+                      <button class="btn btn-sm btn-outline-secondary w-100 w-md-50" disabled>❌ Annulla (già annullata)</button>
+                    {% else %}
+                      <a href="{% url 'cancel_match' match.id %}" class="btn btn-sm btn-outline-danger w-100 w-md-50" onclick="return confirm('Vuoi davvero annullare questa partita?');">❌ Annulla</a>
+                    {% endif %}
+
+                  {% endif %}
+              {% else %}
+                {%  if user|is_confirmed_convocated:match and match.score_team1 != None and match.score_team2 != None  %}
+                  <a href="{% url 'review_match_votes' match.id %}" class="btn btn-sm btn-outline-info w-100 w-md-50">📊 Statistiche e voti</a>
+                  {% if match_has_comments|get_item:match.id %}
+                            <a href="{% url 'match_comments' match.id %}" class="btn btn-sm btn-outline-secondary w-100 w-md-50 ">
+                              💬 Mostra commenti
+                            </a>
+                    {% endif %}
+                {% endif %}
+                
+              {% endif %}
+              {% if not match.is_cancelled %}
+                  {% if user == match.created_by or user|is_confirmed_convocated:match %}
+                    <a href="{% url 'manage_teams' match.id %}" class="btn btn-sm btn-outline-dark w-100 w-md-50 
+                    {% if match.score_team1 is not None and match.score_team2 is not None %}disabled{% endif %}">🧩 Gestisci squadre</a>
+                  {% endif %}
+                {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>Non ci sono partite da mostrare.</p>
+  {% endif %}
+</div>
+
+
+
+
+
+<script>
+  function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  }
+  
+  function loadResultForm(matchId, button) {
+    fetch(`/matches/api/match/${matchId}/players/`)
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById(`result-form-container-${matchId}`);
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/matches/${matchId}/inserisci_risultato/`;
+  
+        // CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+  
+        // RIGA GOAL E MARCATORI
+        const row = document.createElement('div');
+        row.className = 'row text-center mb-3 justify-content-center';
+  
+        ['team1', 'team2'].forEach(team => {
+          const col = document.createElement('div');
+          col.className = 'col-6';
+          const title = document.createElement('div');
+          title.className = team === 'team1' ? 'text-danger fw-bold' : 'text-primary fw-bold';
+          title.textContent = team === 'team1' ? 'ROSSI' : 'BLU';
+          col.appendChild(title);
+  
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.min = 0;
+          input.name = `score_${team}`;
+          input.className = 'form-control goal-input my-1';
+          input.onchange = () => updateScorerFields(team, parseInt(input.value), data[team], col);
+          col.appendChild(input);
+  
+          const marcatoriDiv = document.createElement('div');
+          marcatoriDiv.className = 'marcatori-container';
+          marcatoriDiv.dataset.team = team;
+          col.appendChild(marcatoriDiv);
+  
+          row.appendChild(col);
+        });
+  
+        form.appendChild(row);
+        container.innerHTML = '';
+        container.appendChild(form);
+  
+        button.textContent = '💾 Salva risultato e marcatori';
+        button.onclick = () => {
+          if (confirm("Confermi l'inserimento del risultato? Dopo questa operazione la partita non sarà più modificabile.")) {
+            form.submit();
+          }
+        };
+      });
+  }
+  
+  function updateScorerFields(team, goalCount, players, container) {
+    const scorerDiv = container.querySelector('.marcatori-container');
+    scorerDiv.innerHTML = '';
+    for (let i = 0; i < goalCount; i++) {
+      const select = document.createElement('select');
+      select.name = `marcatore_${team}[]`;
+      select.className = 'form-select form-select-sm my-1';
+      players.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        select.appendChild(opt);
+      });
+      scorerDiv.appendChild(select);
+    }
+  }
+  </script>
+  <style>
+  /* Altezza dinamica su schermi larghi */
+  .scroll-column,
+  .list-group {
+    max-height: calc(100vh - 340px);
+    overflow-y: auto;
+  }
+
+  /* Ottimizzazione per tablet e mobile */
+  @media (max-width: 768px) {
+    .scroll-column,
+    .list-group {
+      max-height: calc(100vh - 250px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .scroll-column,
+    .list-group {
+      max-height: calc(100vh - 200px);
+    }
+  }
+</style>
+
+{% endblock %}

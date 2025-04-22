@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Diventa Organizzatore - PlayOn{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 text-center">
+      <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 80px;">
+      <h2 class="mt-4">🎯 Vuoi diventare Organizzatore?</h2>
+      <p class="lead">Con PlayOn puoi gestire gruppi, organizzare partite e convocare i tuoi amici.</p>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-playon btn-lg mt-3">
+          <i class="bi bi-person-gear"></i> Sì, voglio diventare organizzatore
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+
+/* ===================== */
+/* 🎨 PlayOn Base Style */
+/* ===================== */
+
+:root {
+  --playon-primary: #0066ff;
+  --playon-secondary: #00b386;
+  --playon-dark: #20262e;
+  --playon-light: #f4f6fa;
+  --playon-warning: #ffa726;
+  --playon-danger: #e53935;
+  --playon-font: 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--playon-light);
+  font-family: var(--playon-font);
+  color: var(--playon-dark);
+}
+
+/* Navbar */
+.navbar {
+  background-color: var(--playon-dark);
+  color: white;
+}
+.navbar a {
+  color: white;
+}
+.navbar-brand {
+  font-weight: bold;
+}
+
+/* Buttons */
+.btn-playon {
+  background-color: var(--playon-primary);
+  color: white;
+  border: none;
+}
+.btn-playon:hover {
+  background-color: #0056d6;
+}
+
+.btn-outline-playon {
+  border: 1px solid var(--playon-primary);
+  color: var(--playon-primary);
+}
+.btn-outline-playon:hover {
+  background-color: var(--playon-primary);
+  color: white;
+}
+
+/* Badges */
+.badge-mvp {
+  background-color: gold;
+  color: black;
+  font-weight: bold;
+}
+.badge-playon {
+  background-color: var(--playon-secondary);
+  color: white;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  color: var(--playon-primary);
+}
+
+/* Cards */
+.card {
+  border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Tables */
+.table thead {
+  background-color: var(--playon-primary);
+  color: white;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .navbar .btn {
+    font-size: 0.9rem;
+  }
+  .btn-playon {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.75rem;
+  }
+}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="text-center mb-4">
+        <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 50px;">
+        <h2 class="mt-2">Statistiche di Giocatore <span class="text-primary">Gruppo</span></h2>
+        <p class="text-muted">Consulta performance e voti dei tuoi compagni</p>
+      </div>
+    <div class="alert bg-light border border-secondary">
+        Presenze totali: <strong>{{ presenze_totali }}</strong><br>
+        🔴 Presenze nei ROSSI: {{ team1_presenze }}  - Goal realizzati con i ROSSI {{ team1_goals }} <br>
+        🔵 Presenze nei BLU: {{ team2_presenze }} - Goal realizzati con i BLU {{ team2_goals }} 
+      </div>
+    <div class="accordion mt-4" id="matchAccordion">
+        {% for entry in match_data %}
+        <div class="accordion-item">
+            <div class="accordion-header" id="heading{{ forloop.counter }}">
+                <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false"
+                  aria-controls="collapse{{ forloop.counter }}">
+                  🗓️ {{ entry.match.date|date:"d/m/Y" }} – {{ entry.match.time|time:"H:i" }} –
+                  {{ entry.match.structure }} – ⚽ Goal: {{ entry.goals }}
+                  {% if entry.team == "team1" %}
+                    <span class="badge bg-danger ms-2">ROSSI</span>
+                  {% elif entry.team == "team2" %}
+                    <span class="badge bg-primary ms-2">BLU</span>
+                  {% endif %}
+                </button>
+            </div>
+            
+
+            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#matchAccordion">
+                <div class="accordion-body">
+                    {% if entry.votes %}
+                        <ul class="list-group">
+                            {% for vote in entry.votes %}
+                                <li class="list-group-item">
+                                    {% comment %} {{ vote.vote }} ⭐  {% endcomment %}
+                                    {{ vote.vote }} ⭐ – da {{ vote.voter.get_full_name|default:vote.voter.username }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Nessun voto ricevuto.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <a href="{% url 'group_stats' %}?group={{ request.GET.group }}" class="btn btn-outline-playon mt-4">⬅ Torna alle statistiche del gruppo</a>
+</div>
+<style>
+    .accordion-button {
+      padding-top: 0.3rem;
+      padding-bottom: 0.3rem;
+    }
+    .accordion-item {
+      margin-bottom: 0.5rem;
+      border-radius: 0.3rem;
+      overflow: hidden;
+    }
+</style>
+{% endblock %}

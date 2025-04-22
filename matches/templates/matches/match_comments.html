@@ -1,0 +1,27 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-4">💬 Commenti sulla partita del {{ match.date }} – {{ match.group.name }}</h3>
+
+  {% if comments %}
+    <ul class="list-group">
+      {% for comment in comments %}
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+            <small class="text-muted">{{ comment.created_at|date:"d/m/Y H:i" }}</small>
+          </div>
+          <p class="mt-2 mb-0">{{ comment.content }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">Nessun commento per questa partita.</p>
+  {% endif %}
+
+  <a href="{% url 'match_list' %}" class="btn btn-outline-playon mt-4">⬅ Torna alla lista partite</a>
+</div>
+{% endblock %}

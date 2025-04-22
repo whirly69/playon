@@ -1,0 +1,95 @@
+
+{% extends 'base.html' %}
+{% load static %}
+{% load dict_utils %}
+{% block title %}Gestione Richieste Gruppi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="text-center mb-4">
+    <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 50px;">
+    <h2 class="mt-3">🔔 Le tue <span class="text-primary">Notifiche</span></h2>
+    <p class="text-muted small">Tutte le convocazioni, aggiornamenti e azioni da completare</p>
+  </div>
+  
+
+  {% if requests %}
+    <div class="accordion mt-3" id="requestAccordion">
+      {% for join_request in requests %}
+        {% with group=join_request.group %}
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading{{ join_request.id }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ join_request.id }}" aria-expanded="false" aria-controls="collapse{{ join_request.id }}">
+              {{ join_request.user.get_full_name }} → <strong class="ms-2">{{ group.name }}</strong>
+            </button>
+          </h2>
+          <div id="collapse{{ join_request.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ join_request.id }}" data-bs-parent="#requestAccordion">
+            <div class="accordion-body">
+              <p><strong>Email:</strong> {{ join_request.user.email }}</p>
+              <p><strong>Richiesta inviata:</strong> {{ join_request.created_at|date:"d/m/Y H:i" }}</p>
+
+              <!-- Bottone per aprire il modale -->
+              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAssign_{{ join_request.id }}">
+                Gestisci richiesta
+              </button>
+
+              <!-- Modale -->
+              <div class="modal fade" id="modalAssign_{{ join_request.id }}" tabindex="-1" aria-labelledby="modalLabel_{{ join_request.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="modalLabel_{{ join_request.id }}">Assegna profilo a {{ join_request.user.get_full_name }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                    </div>
+                    <div class="modal-body">
+                      <!-- Associa player esistente -->
+                      <h6>Associa a un profilo Player esistente</h6>
+                      <form action="{% url 'assign_player' join_request.id %}" method="post">
+                        {% csrf_token %}
+                        <select name="player_id" class="form-select mb-3" required>
+                          {% for player in players_by_group|get_item:group.id %}
+                            <option value="{{ player.id }}">{{ player.name }}</option>
+                          {% endfor %}
+                        </select>
+                        <button class="btn btn-success w-100 mb-3" type="submit">Associa profilo esistente</button>
+                      </form>
+
+                      <hr class="my-2">
+                      <!-- Crea nuovo profilo -->
+                      <h6>Crea un nuovo profilo Player</h6>
+                      <form action="{% url 'create_and_assign_player' join_request.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                          <label for="role_select_{{ join_request.id }}" class="form-label">
+                            Ruolo da assegnare (suggerito: {{ join_request.user.player_role }})
+                          </label>
+                          <select name="role_id" class="form-select" required id="role_select_{{ join_request.id }}">
+                            {% for role in roles_by_group|get_item:group.id %}
+                              <option value="{{ role.id }}">{{ role.name }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <button class="btn btn-primary w-100" type="submit">Crea e assegna nuovo profilo</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Opzione per rifiutare -->
+              <form action="{% url 'handle_request' join_request.id 'reject' %}" method="post" class="mt-3">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger">Rifiuta richiesta</button>
+              </form>
+
+            </div>
+          </div>
+        </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">Nessuna richiesta in sospeso.</p>
+  {% endif %}
+</div>
+{% endblock %}

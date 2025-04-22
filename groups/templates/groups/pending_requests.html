@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h3>Richieste inviate</h3>
+  {% if requests %}
+    <ul class="list-group">
+      {% for req in requests %}
+        <li class="list-group-item">
+          Gruppo: <strong>{{ req.group.name }}</strong><br>
+          Creato da: {{ req.group.created_by.first_name }} {{ req.group.created_by.last_name }}<br>
+          Inviata il: {{ req.created_at|date:"d/m/Y H:i" }}<br>
+          Stato: <span class="badge bg-secondary">{{ req.status }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Non hai richieste inviate.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load dict_utils %}
+{% block title %}Prestazioni partita{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Gestione performance – {{ match.group.name }} ({{ match.date }})</h2>
+  <form method="post">
+    {% csrf_token %}
+    <table class="table table-bordered table-striped shadow-sm">
+      <thead>
+        <tr>
+          <th>Giocatore</th>
+          <th>Presente</th>
+          <th>Goal</th>
+          <th>Voto</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for player in players %}
+          {% with perf=performances|get_item:player.id %}
+          <tr>
+            <td>{{ player.name }}</td>
+            <td>
+              <input type="checkbox" name="player_{{ player.id }}_present"
+                     class="form-check-input"
+                     {% if perf and perf.present %}checked{% endif %}>
+            </td>
+            <td>
+              <input type="number" name="player_{{ player.id }}_goals" min="0" class="form-control"
+                     value="{{ perf.goals|default:0 }}">
+            </td>
+            <td>
+              <input type="number" name="player_{{ player.id }}_vote" step="0.5" min="0" max="10"
+                     class="form-control"
+                     value="{{ perf.vote|default_if_none:'' }}">
+            </td>
+          </tr>
+          {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="submit" class="btn btn-playon">Salva</button>
+  </form>
+</div>
+{% endblock %}

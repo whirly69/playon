@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Foglio di Coerenza{% endblock %}
+{% block content %}
+  <div class="container py-4">
+    <h2>Foglio di Coerenza del Progetto</h2>
+    <div class="markdown-body">
+      {{ content|safe }}
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% load crispy_forms_tags %}
+{% block title %}Strutture{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="text-center mb-4">
+    <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 60px;">
+    <h2 class="mt-2">Gestione <span class="text-primary">Strutture</span></h2>
+    <p class="text-muted">Organizza i tuoi campi da gioco per partite sempre perfette ⚽</p>
+  </div>
+
+  <div class="row">
+    <!-- Lista strutture -->
+    <div class="col-md-7">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Le tue strutture</h5>
+          {% if structures %}
+            <ul class="list-group">
+              {% for structure in structures %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ structure.name }}</strong><br>
+                  <small>{{ structure.address }}</small>
+                </div>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editStructureModal-{{ structure.id }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <form method="post" action="{% url 'structure_delete' structure.id %}" onsubmit="return confirm('Eliminare la struttura {{ structure.name }}?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>Non hai ancora creato strutture.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Aggiungi struttura -->
+    <div class="col-md-5">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Aggiungi struttura</h5>
+          <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-success mt-2">Aggiungi</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modali modifica -->
+  {% for structure in structures %}
+  <div class="modal fade" id="editStructureModal-{{ structure.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" action="{% url 'structure_update' structure.id %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title">Modifica struttura</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            {{ structure_forms|dict_get:structure.id|crispy }}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+            <button type="submit" class="btn btn-primary">Salva</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+  .group-tab-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .player-list-wrapper {
+    flex: 1 1 60%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 15px;
+    background: #f8f9fa;
+  }
+  .player-form-wrapper {
+    flex: 1 1 35%;
+    min-width: 300px;
+  }
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .icon-btn i {
+    font-size: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    .group-tab-content {
+      flex-direction: column;
+    }
+    .player-list-wrapper,
+    .player-form-wrapper {
+      max-height: none;
+    }
+  }
+</style>
+{% endblock %}

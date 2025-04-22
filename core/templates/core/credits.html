@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Credits - PlayOn{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 60px;">
+  <h1 class="mt-3">Credits</h1>
+  <p class="lead">Grazie a chi ha contribuito alla realizzazione di <strong>PlayOn</strong>.</p>
+
+  <div class="mt-4">
+    <p><strong>Progetto:</strong> PlayOn</p>
+    <p><strong>Sviluppatore:</strong> RioHiTech</p>
+    <p><strong>e-Mail:</strong> riohitech@gmail.com</p>
+    <p><strong>Tester:</strong> Gruppo pilota PlayOn</p>
+    <p><strong>Librerie open-source usate:</strong></p>
+    <ul class="list-unstyled small text-muted text-start d-inline-block">
+      <li>asgiref==3.8.1</li>
+      <li>Brotli==1.1.0</li>
+      <li>cffi==1.17.1</li>
+      <li>crispy-bootstrap5==2024.10</li>
+      <li>cssselect2==0.8.0</li>
+      <li>Django==5.1.7</li>
+      <li>django-crispy-forms==2.3</li>
+      <li>fonttools==4.57.0</li>
+      <li>Markdown==3.7</li>
+      <li>pillow==11.1.0</li>
+      <li>pycparser==2.22</li>
+      <li>pydyf==0.11.0</li>
+      <li>pyphen==0.17.2</li>
+      <li>sqlparse==0.5.3</li>
+      <li>tinycss2==1.4.0</li>
+      <li>tinyhtml5==2.0.0</li>
+      <li>tzdata==2025.2</li>
+      <li>weasyprint==65.0</li>
+      <li>webencodings==0.5.1</li>
+      <li>zopfli==0.2.3.post1</li>
+      <li>psycopg2-binary==2.9.10</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

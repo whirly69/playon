@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Statistiche Generali{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="text-center mb-4">
+    <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 50px;">
+    <h2 class="mt-2">Statistiche del Gruppo <span class="text-primary">Gruppo</span></h2>
+    <p class="text-muted">Consulta performance e voti dei tuoi compagni</p>
+  </div>
+  <!-- Aggiunta selezione gruppo -->
+  <div class="col-md-4">
+    
+    
+      {% for group in user_groups %}
+        <option value="{{ group.id }}" {% if selected_group_id == group.id %}selected{% endif %}>
+          {{ group.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  
+  <!-- Filtri -->
+<form method="get" class="row g-3 mb-4 align-items-end">
+  <div class="col-md-3">
+    <label class="form-label">Gruppo</label>
+    <select name="group" class="form-select">
+      {% for group in groups %}
+        <option value="{{ group.id }}" {% if group.id == selected_group %}selected{% endif %}>{{ group.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Ruolo</label>
+    <select name="role" class="form-select">
+      <option value="">Tutti i ruoli</option>
+      {% for role in roles %}
+        <option value="{{ role }}" {% if selected_role == role %}selected{% endif %}>{{ role }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label d-block">Vista</label>
+    <div class="btn-group" role="group">
+      <a href="?{% querystring request.GET view='table' %}" class="btn btn-outline-playon {% if not selected_view or selected_view == 'table' %}active{% endif %}">Tabellare</a>
+      <a href="?{% querystring request.GET view='cards' %}" class="btn btn-outline-playon {% if selected_view == 'cards' %}active{% endif %}">Card-style</a>
+    </div>
+  </div>
+  <div class="col-md-3 text-end">
+    <label class="form-label">Ordina per</label>
+    <select name="order_by" class="form-select">
+      <option value="presences" {% if selected_order_by == "presences" %}selected{% endif %}>Presenze</option>
+      <option value="wins" {% if selected_order_by == "wins" %}selected{% endif %}>Vittorie</option>
+      <option value="draws" {% if selected_order_by == "draws" %}selected{% endif %}>Pareggi</option>
+      <option value="losses" {% if selected_order_by == "losses" %}selected{% endif %}>Sconfitte</option>
+      <option value="goals" {% if selected_order_by == "goals" %}selected{% endif %}>Goal</option>
+      <option value="average_vote" {% if selected_order_by == "average_vote" %}selected{% endif %}>Voto medio</option>
+    </select>
+  </div>
+  <div class="col-12">
+    <button type="submit" class="btn btn-playon">Applica filtri</button>
+  </div>
+</form>
+
+
+  <!-- Vista Tabellare -->
+  {% if not selected_view or selected_view == 'table' %}
+  <div class="table-responsive mt-4" style="max-height: calc(100vh - 230px); overflow-y: auto;">
+    <table class="table table-striped table-bordered shadow-sm">
+      <thead>
+        <tr>
+          <th>Giocatore</th>
+          <th>Ruolo</th>
+          <th>Presenze</th>
+          <th>Vittorie</th>
+          <th>Pareggi</th>
+          <th>Sconfitte</th>
+          <th>Goal</th>
+          <th>Voto medio</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stat in stats %}
+          <tr>
+            <td>
+              {% if stat.player and stat.player.id %}
+                <a href="{% url 'player_stats_detail' stat.player.id %}?group={{ selected_group }}">{{ stat.player.name }}</a>
+              {% else %}
+                {{ stat.player.name }}
+              {% endif %}
+            </td>
+            <td>{{ stat.player.role.name }}</td>
+            <td>{{ stat.presences }}</td>
+            <td>{{ stat.wins }}</td>
+            <td>{{ stat.draws }}</td>
+            <td>{{ stat.losses }}</td>
+            <td>{{ stat.goals }}</td>
+            <td>{{ stat.average_vote|default:"-" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Vista Card-style -->
+  {% elif selected_view == 'cards' %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 overflow-auto mt-4" style="max-height: calc(100vh - 230px);">
+    {% for stat in stats %}
+      <div class="col">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">
+              {% if stat.player and stat.player.id %}
+                <a href="{% url 'player_stats_detail' stat.player.id %}?group={{ selected_group }}">{{ stat.player.name }}</a>
+              {% else %}
+                {{ stat.player.name }}
+              {% endif %}
+            </h5>
+            <h6 class="card-subtitle mb-2 text-muted">{{ stat.player.role.name }}</h6>
+            <ul class="list-group list-group-flush mt-3">
+              <li class="list-group-item"><strong>Presenze:</strong> {{ stat.presences }}</li>
+              <li class="list-group-item"><strong>Vittorie:</strong> {{ stat.wins }}</li>
+              <li class="list-group-item"><strong>Pareggi:</strong> {{ stat.draws }}</li>
+              <li class="list-group-item"><strong>Sconfitte:</strong> {{ stat.losses }}</li>
+              <li class="list-group-item"><strong>Goal:</strong> {{ stat.goals }}</li>
+              <li class="list-group-item"><strong>Voto medio:</strong> {{ stat.average_vote|default:"-" }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .scroll-container {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+</style>
+{% endblock %}

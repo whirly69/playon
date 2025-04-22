@@ -1,0 +1,16 @@
+{
+    "SECRET_KEY": "django-insecure-%gv=4anj6!j)1l3$9n4+3tf4l+#eb3lom7vbkj%^%#&xmguere",
+    "DEBUG": true,
+    "ENABLE_EMAILS": true,
+    "ALLOWED_HOSTS": "127.0.0.1,localhost",
+    "EMAIL_HOST_USER": "riohitech@gmail.com",
+    "EMAIL_HOST_PASSWORD": "xuxjfpnvgbcirkmp",
+    "DB_ENGINE":"django.db.backends.postgresql",
+    "DB_NAME": "playon_db",
+    "DB_USER": "playon_user",
+    "DB_PASSWORD": "Andrea2008_Mari2001",
+    "DB_HOST": "localhost",
+    "DB_PORT": "5432"
+
+}
+  

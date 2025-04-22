@@ -1,0 +1,417 @@
+<!-- manage_teams.html (con pulsante di reset) -->
+{% extends 'base.html' %}
+{% block content %}
+<h3>Gestione Squadre</h3>
+
+<form method="post" id="save-teams-form">
+  {% csrf_token %}
+  <div class="d-flex justify-content-between mb-3">
+    <div>
+      {% if can_save %}
+        <button type="submit" id="save-teams" class="btn btn-playon" disabled>💾 Salva Squadre</button>
+      {% endif %}
+      <button type="button" class="btn btn-danger" onclick="resetSquadre()">🔄 Reset</button>
+      {% comment %} <form id="exportForm" action="{% url 'export_teams_pdf' match.id %}" method="get" target="_blank"> {% endcomment %}
+        <button type="button" onclick="salvaSquadreEdEsporta()" class="btn btn-outline-playon">
+          <i class="bi bi-file-earmark-pdf"></i> Esporta PDF
+        </button>
+      {% comment %} </form> {% endcomment %}
+    </div>
+    <button type="button" class="btn btn-outline-playon" onclick="generatePrompt()">🤖 Crea prompt per IA</button>
+  </div>
+
+
+  <div class="row">
+    <div class="col-md-4">
+      <h5>Convocati</h5>
+      <div id="convocati-list" class="list-group  scroll-column"></div>
+    </div>
+    <div class="col-md-4">
+      <h5>Rossi <span class="badge badge-playon" id="team1-count">0</span></h5>
+      <div id="team1-list" class="list-group scroll-column"></div>
+      <div id="team1-summary" class="mt-2">
+        Totale: <span id="team1-score">0</span><br>
+        Età media: <span id="team1-age">-</span><br>
+        Ruoli:
+        <ul id="team1-roles"></ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <h5>Blu <span class="badge badge-playon" id="team2-count">0</span></h5>
+      <div id="team2-list" class="list-group scroll-column"></div>
+      <div id="team2-summary" class="mt-2">
+        Totale: <span id="team2-score">0</span><br>
+        Età media: <span id="team2-age">-</span><br>
+        Ruoli:
+        <ul id="team2-roles"></ul>
+      </div>
+    </div>
+  </div>
+</form>
+<div id="limit-alert-team1" class="alert bg-warning-subtle border border-warning mt-3 d-none" role="alert">
+  ⚠️ Non puoi aggiungere altri giocatori: la squadra <strong>Rossi</strong> è al completo.
+</div>
+<div id="limit-alert-team2" class="alert bg-warning-subtle border border-warning mt-3 d-none" role="alert">
+  ⚠️ Non puoi aggiungere altri giocatori: la squadra <strong>Blu</strong> è al completo.
+</div>
+<div id="limit-alert-both" class="alert bg-info-subtle border border-info mt-3 d-none" role="alert">
+  ✅ Entrambe le squadre sono al completo. Puoi procedere con il salvataggio.
+</div>
+<div id="portieri-warning" class="alert bg-danger-subtle border border-danger mt-3 d-none" role="alert">
+  ⚠️ Attenzione: una squadra ha più di un portiere assegnato.
+</div>
+<!-- Modal Prompt -->
+<div class="modal fade" id="promptModal" tabindex="-1" aria-labelledby="promptModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="promptModalLabel">Prompt generato per ChatGPT</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <textarea class="form-control" rows="10" readonly id="prompt-text"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-playon" onclick="copyPrompt()">📋 Copia prompt</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  /* Altezza dinamica su schermi larghi */
+  .scroll-column,
+  .list-group {
+    max-height: calc(100vh - 340px);
+    overflow-y: auto;
+  }
+
+  /* Ottimizzazione per tablet e mobile */
+  @media (max-width: 768px) {
+    .scroll-column,
+    .list-group {
+      max-height: calc(100vh - 250px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .scroll-column,
+    .list-group {
+      max-height: calc(100vh - 200px);
+    }
+  }
+</style>
+
+<script id="player-data" type="application/json">{{ player_data|safe }}</script>
+<script id="saved-votes" type="application/json">{{ saved_votes|default:'{}'|safe }}</script>
+<script id="max-players" type="application/json">{{ match.players_per_team }}</script>
+
+<script>
+const players = JSON.parse(document.getElementById("player-data").textContent);
+const parsedVotes = JSON.parse(document.getElementById("saved-votes").textContent || '{}');
+const mode = "{{ mode }}";
+
+function getRoleOrder(role) {
+  const order = [
+    "portiere",
+    "terzino",
+    "esterno basso",
+    "terzino destro",
+    "terzino sinistro",
+    "difensore",
+    "difensore esterno",
+    "difensore centrale",
+    "centrocampista",
+    "esterno alto",
+    "ala",
+    "attaccante esterno",
+    "attaccante"
+  ];
+  const index = order.findIndex(keyword => role.toLowerCase().includes(keyword));
+  return index !== -1 ? index : 99;
+}
+
+function resetSquadre() {
+  if (!confirm("Sei sicuro di voler resettare tutte le squadre e i voti?")) return;
+  players.forEach(p => {
+    p.team = "none";
+    parsedVotes[p.id] = 3;
+  });
+  document.getElementById("save-teams").removeAttribute("disabled");
+  renderAll();
+}
+
+function generatePrompt() {
+  const team1Fixed = players.filter(p => p.team === "team1");
+  const team2Fixed = players.filter(p => p.team === "team2");
+  const freePlayers = players.filter(p => p.team === "none");
+
+  const lines = [];
+  lines.push("Ho un gruppo di giocatori da distribuire in due squadre equilibrate.");
+  if (team1Fixed.length || team2Fixed.length) {
+    lines.push("I seguenti giocatori devono restare nelle rispettive squadre:");
+    if (team1Fixed.length) {
+      lines.push("- ROSSI:");
+      team1Fixed.forEach(p => {
+        const vote = parsedVotes[p.id] || 3;
+        lines.push(`  - ${p.name}: ${p.role}, ${p.age} anni, voto ${vote}`);
+      });
+    }
+    if (team2Fixed.length) {
+      lines.push("- BLU:");
+      team2Fixed.forEach(p => {
+        const vote = parsedVotes[p.id] || 3;
+        lines.push(`  - ${p.name}: ${p.role}, ${p.age} anni, voto ${vote}`);
+      });
+    }
+  }
+  if (freePlayers.length) {
+    lines.push("Ecco i giocatori da considerare per il bilanciamento:");
+    freePlayers.forEach(p => {
+      const vote = parsedVotes[p.id] || 3;
+      lines.push(`- ${p.name}: ${p.role}, ${p.age} anni, voto ${vote}`);
+    });
+  }
+  lines.push("Obiettivo: crea due squadre equilibrate in termini di ruoli, età media e voto medio. Rispettare i vincoli sopra indicati.");
+  lines.push("In base alla distribuzione dei ruoli, suggerisci anche eventuali schemi di gioco adatti per ciascuna squadra.");
+
+  document.getElementById("prompt-text").value = lines.join("\n");
+  const promptModal = new bootstrap.Modal(document.getElementById('promptModal'));
+  promptModal.show();
+}
+
+function copyPrompt() {
+  const textarea = document.getElementById("prompt-text");
+  textarea.select();
+  document.execCommand("copy");
+  const promptModal = bootstrap.Modal.getInstance(document.getElementById('promptModal'));
+  if (promptModal) promptModal.hide();
+  alert("Prompt copiato negli appunti!");
+}
+
+function updateVote(id, value) {
+  parsedVotes[id] = value;
+  const input = document.querySelector(`input[name="vote_${id}"]`);
+  if (input) input.value = value;
+  updateStarStyles(id, value);
+  updateCounters();
+}
+
+function updateStarStyles(id, vote) {
+  const stars = document.querySelectorAll(`#player-${id} .vote-stars .star`);
+  stars.forEach((s, i) => s.classList.toggle("selected", i < vote));
+}
+
+function updateCounters() {
+  const max = JSON.parse(document.getElementById("max-players").textContent);
+  const teams = { team1: { score: 0, age: 0, count: 0, roles: {} }, team2: { score: 0, age: 0, count: 0, roles: {} } };
+
+  players.forEach(p => {
+    if (!['team1', 'team2'].includes(p.team)) return;
+    const vote = parsedVotes[p.id] || 3;
+    const t = teams[p.team];
+    t.score += vote;
+    t.age += p.age;
+    t.count++;
+    t.roles[p.role] = (t.roles[p.role] || 0) + 1;
+  });
+
+  let portiereWarning = false;
+
+  for (const team of ["team1", "team2"]) {
+    const data = teams[team];
+    document.getElementById(`${team}-score`).textContent = data.score;
+    document.getElementById(`${team}-age`).textContent = data.count ? (data.age / data.count).toFixed(1) : "-";
+    document.getElementById(`${team}-count`).textContent = data.count;
+    const ul = document.getElementById(`${team}-roles`);
+    ul.innerHTML = "";
+    for (const [role, n] of Object.entries(data.roles)) {
+      const li = document.createElement("li");
+      li.textContent = `${role}: ${n}`;
+      ul.appendChild(li);
+      if (role.toLowerCase().includes("portiere") && n > 1) {
+        portiereWarning = true;
+      }
+    }
+  }
+
+  const team1Full = teams.team1.count >= max;
+  const team2Full = teams.team2.count >= max;
+  const bothFull = team1Full && team2Full;
+
+  const alert1 = document.getElementById("limit-alert-team1");
+  const alert2 = document.getElementById("limit-alert-team2");
+  const alertBoth = document.getElementById("limit-alert-both");
+  const alertPortieri = document.getElementById("portieri-warning");
+
+  if (team1Full && !bothFull) {
+    alert1.classList.remove("d-none");
+    setTimeout(() => alert1.classList.add("d-none"), 3000);
+  } else {
+    alert1.classList.add("d-none");
+  }
+  if (team2Full && !bothFull) {
+    alert2.classList.remove("d-none");
+    setTimeout(() => alert2.classList.add("d-none"), 3000);
+  } else {
+    alert2.classList.add("d-none");
+  }
+  alertBoth.classList.toggle("d-none", !bothFull);
+  alertPortieri.classList.toggle("d-none", !portiereWarning);
+
+  document.querySelectorAll(".btn-outline-secondary").forEach(btn => {
+    if (btn.innerHTML === "🟥") btn.disabled = team1Full;
+    else if (btn.innerHTML === "🟦") btn.disabled = team2Full;
+    else btn.disabled = false;
+  });
+}
+
+function moveTo(id, newTeam) {
+  const p = players.find(p => p.id === id);
+  if (!p) return;
+  p.team = newTeam;
+  players.sort((a, b) => getRoleOrder(a.role) - getRoleOrder(b.role));
+  renderAll();
+  if (mode === 'manual') document.getElementById("save-teams").removeAttribute("disabled");
+}
+
+function createStars(player) {
+  const c = document.createElement("div");
+  c.classList.add("vote-stars", "ms-2", "d-inline-block");
+  for (let i = 1; i <= 5; i++) {
+    const s = document.createElement("span");
+    s.className = "star";
+    s.innerHTML = "★";
+    s.style.cursor = "pointer";
+    s.addEventListener("click", () => updateVote(player.id, i));
+    c.appendChild(s);
+  }
+  return c;
+}
+
+function createCard(player) {
+  const card = document.createElement("div");
+  card.className = "list-group-item d-flex justify-content-between align-items-center";
+  card.id = `player-${player.id}`;
+
+  const info = document.createElement("div");
+  info.innerHTML = `<strong>${player.name}</strong><br><small>Età: ${player.age} • Ruolo: ${player.role}</small>`;
+
+  const right = document.createElement("div");
+  right.className = "d-flex align-items-center";
+
+  if (mode === 'manual') {
+    const currentTeam = player.team || "none";
+    const buttons = [
+      { team: "none", icon: "↩️" },
+      { team: "team1", icon: "🟥" },
+      { team: "team2", icon: "🟦" }
+    ].filter(btn => btn.team !== currentTeam);
+
+    buttons.forEach(({ team, icon }) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn btn-outline-playon btn-sm ms-1";
+      b.innerHTML = icon;
+      b.onclick = () => moveTo(player.id, team);
+      right.appendChild(b);
+    });
+  }
+
+  const stars = createStars(player);
+  right.appendChild(stars);
+
+  const vote = document.createElement("input");
+  vote.type = "hidden";
+  vote.name = `vote_${player.id}`;
+  vote.value = parsedVotes[player.id] || 3;
+
+  const assign = document.createElement("input");
+  assign.type = "hidden";
+  assign.name = `assignment_${player.id}`;
+  assign.value = player.team;
+
+  card.appendChild(info);
+  card.appendChild(right);
+  card.appendChild(vote);
+  card.appendChild(assign);
+  return card;
+}
+
+function renderAll() {
+  ["convocati-list", "team1-list", "team2-list"].forEach(id => document.getElementById(id).innerHTML = "");
+  players.slice().sort((a, b) => getRoleOrder(a.role) - getRoleOrder(b.role)).forEach(player => {
+    const el = createCard(player);
+    document.querySelector(`#${player.team === 'team1' ? 'team1-list' : player.team === 'team2' ? 'team2-list' : 'convocati-list'}`).appendChild(el);
+    updateStarStyles(player.id, parsedVotes[player.id] || 3);
+  });
+  updateCounters();
+}
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  {% if not can_save %}
+      const form = document.querySelector("#save-teams-form");
+      if (form) {
+        form.addEventListener("submit", function(event) {
+          event.preventDefault();
+          alert("Solo l'organizzatore può salvare le squadre.");
+        });
+      }
+    {% endif %}
+  renderAll();
+
+});
+
+function getCsrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function salvaSquadreInSessione(callback = null) {
+  const team1Ids = players.filter(p => p.team === 'team1').map(p => p.id);
+  const team2Ids = players.filter(p => p.team === 'team2').map(p => p.id);
+  const voti = {};
+  players.forEach(p => {
+    voti[p.id] = parsedVotes[p.id] || 3;
+  });
+  fetch(`/matches/{{ match.id }}/salva_squadre_sessione/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCsrfToken()
+    },
+    body: JSON.stringify({
+      team1: team1Ids,
+      team2: team2Ids,
+      votes: voti
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Errore salvataggio sessione");
+    return response.json();
+  })
+  .then(data => {
+    if (callback) callback();  // esegui qualcosa dopo
+  })
+  .catch(error => {
+    console.error("Errore:", error);
+  });
+}
+
+function salvaSquadreEdEsporta() {
+  salvaSquadreInSessione(() => {
+    window.open("{% url 'export_teams_pdf' match.id %}", '_blank');
+  });
+}
+
+
+
+
+</script>
+
+
+<style>
+  .vote-stars .star { color: gray; }
+  .vote-stars .star.selected { color: gold; }
+</style>
+{% endblock %}

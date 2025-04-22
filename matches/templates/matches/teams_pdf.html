@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      font-size: 11px;
+      margin: 30px;
+      color: #20262e;
+    }
+
+    .header {
+      text-align: center;
+    }
+
+    .logo {
+      max-height: 50px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 18px;
+      color: #0066ff;
+      margin-bottom: 5px;
+    }
+
+    .footer {
+      font-size: 9px;
+      color: #888;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-spacing: 0;
+      margin-top: 20px;
+    }
+
+    td {
+      vertical-align: top;
+      width: 49%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .team-title {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 6px;
+      padding: 5px;
+      color: #fff;
+      border-radius: 4px;
+    }
+
+    .rossi {
+      background-color: #e74c3c;
+    }
+
+    .blu {
+      background-color: #3498db;
+    }
+
+    .summary-label {
+      font-weight: bold;
+      color: #00b386;
+      margin-top: 6px;
+    }
+
+    .list p {
+      margin: 2px 0;
+    }
+
+    .roles p {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    
+
+
+    <img src="img/playon_logo_pdf.png" alt="PlayOn" class="logo" style="height: 75px;">
+    <h2>📄 Formazioni Gruppo {{ match.group }}</h2>
+    <h3>Partita del {{ match.date }} presso {{ match.structure }}</h3>
+    <p class="footer">Generato da: {{ generated_by }}</p>
+  </div>
+
+  <table>
+    <tr>
+      <td>
+        <div class="team-title rossi">🟥 Squadra Rossi</div>
+        <div class="list">
+          {% for p in team1 %}
+            <p>- {{ p.name }} – {% if p.role %}{{ p.role.name }}{% else %}-{% endif %}</p>
+          {% endfor %}
+        </div>
+        <div class="summary">
+          <p class="summary-label">Totale: {{ summary1.count }} giocatori</p>
+          <p class="summary-label">Punteggio: {{ summary1.total_score }}</p>
+          <p class="summary-label">Età media: {{ summary1.avg_age }}</p>
+          <p class="summary-label">Ruoli:</p>
+          <div class="roles">
+            {% for role, count in summary1.role_count.items %}
+              <p>- {{ role }}: {{ count }}</p>
+            {% endfor %}
+          </div>
+        </div>
+      </td>
+      <td>
+        <div class="team-title blu">🟦 Squadra Blu</div>
+        <div class="list">
+          {% for p in team2 %}
+            <p>- {{ p.name }} – {% if p.role %}{{ p.role.name }}{% else %}-{% endif %}</p>
+          {% endfor %}
+        </div>
+        <div class="summary">
+          <p class="summary-label">Totale: {{ summary2.count }} giocatori</p>
+          <p class="summary-label">Punteggio: {{ summary2.total_score }}</p>
+          <p class="summary-label">Età media: {{ summary2.avg_age }}</p>
+          <p class="summary-label">Ruoli:</p>
+          <div class="roles">
+            {% for role, count in summary2.role_count.items %}
+              <p>- {{ role }}: {{ count }}</p>
+            {% endfor %}
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

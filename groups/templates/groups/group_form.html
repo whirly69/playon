@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Creazione Gruppo{% endblock %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    {{ form|crispy}}
+    <button type="submit">Salva</button>
+  </form>
+{% endblock content %}

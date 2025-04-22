@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Gestione Gruppo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Gestione gruppo: {{ group.name }}</h2>
+
+  <!-- Form aggiunta giocatore -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Aggiungi nuovo giocatore</h5>
+      <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-success mt-2">Aggiungi giocatore</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lista giocatori esistenti -->
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Giocatori attualmente nel gruppo</h5>
+      {% if players %}
+        <ul class="list-group">
+          {% for player in players %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{ player.name }} ({{ player.role }}) - {{ player.birth_date|date:"d/m/Y" }}
+              <!-- eventualmente: modifica/elimina -->
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>Nessun giocatore inserito ancora.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

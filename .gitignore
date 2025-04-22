@@ -1,0 +1,36 @@
+# Ambiente virtuale
+env/
+
+# File Python compilati
+__pycache__/
+*.py[cod]
+*.pyo
+
+# File temporanei
+*.log
+*.pot
+*.pyc
+*.tmp
+*.swp
+
+# Database di sviluppo
+*.sqlite3
+db.sqlite3
+
+# Backup editor
+*~
+*.bak
+
+# VS Code
+.vscode/
+
+# File di configurazione segreti (se usi .env)
+.env
+playon/config.json
+# Static e media generati (se non li vuoi tracciare)
+staticfiles/
+media/
+
+# Django admin log dump (opzionale)
+dumpdata.json
+db_dump.json

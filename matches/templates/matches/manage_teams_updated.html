@@ -1,0 +1,149 @@
+<!-- manage_teams.html (con pulsante di reset) -->
+{% extends 'base.html' %}
+{% block content %}
+<h3>Gestione Squadre</h3>
+
+<form method="post" id="save-teams-form">
+  {% csrf_token %}
+  <div class="d-flex justify-content-between mb-3">
+    <div>
+      {% if can_save %}
+        <button type="submit" id="save-teams" class="btn btn-playon" disabled>💾 Salva Squadre</button>
+      {% endif %}
+      <button type="button" class="btn btn-danger" onclick="resetSquadre()">🔄 Reset</button>
+      <a href="{% url 'export_teams_pdf' match.id %}" target="_blank" class="btn btn-outline-playon">
+        <i class="bi bi-file-earmark-pdf"></i> Esporta PDF
+      </a>
+    </div>
+    <button type="button" class="btn btn-outline-playon" onclick="generatePrompt()">🤖 Crea prompt per IA</button>
+  </div>
+
+
+  <div class="row">
+    <div class="col-md-4">
+      <h5>Convocati</h5>
+      <div id="convocati-list" class="list-group  scroll-column"></div>
+    </div>
+    <div class="col-md-4">
+      <h5>Rossi <span class="badge badge-playon" id="team1-count">0</span></h5>
+      <div id="team1-list" class="list-group scroll-column"></div>
+      <div id="team1-summary" class="mt-2">
+        Totale: <span id="team1-score">0</span><br>
+        Età media: <span id="team1-age">-</span><br>
+        Ruoli:
+        <ul id="team1-roles"></ul>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <h5>Blu <span class="badge badge-playon" id="team2-count">0</span></h5>
+      <div id="team2-list" class="list-group scroll-column"></div>
+      <div id="team2-summary" class="mt-2">
+        Totale: <span id="team2-score">0</span><br>
+        Età media: <span id="team2-age">-</span><br>
+        Ruoli:
+        <ul id="team2-roles"></ul>
+      </div>
+    </div>
+  </div>
+</form>
+<div id="limit-alert-team1" class="alert bg-warning-subtle border border-warning mt-3 d-none" role="alert">
+  ⚠️ Non puoi aggiungere altri giocatori: la squadra <strong>Rossi</strong> è al completo.
+</div>
+<div id="limit-alert-team2" class="alert bg-warning-subtle border border-warning mt-3 d-none" role="alert">
+  ⚠️ Non puoi aggiungere altri giocatori: la squadra <strong>Blu</strong> è al completo.
+</div>
+<div id="limit-alert-both" class="alert bg-info-subtle border border-info mt-3 d-none" role="alert">
+  ✅ Entrambe le squadre sono al completo. Puoi procedere con il salvataggio.
+</div>
+<div id="portieri-warning" class="alert bg-danger-subtle border border-danger mt-3 d-none" role="alert">
+  ⚠️ Attenzione: una squadra ha più di un portiere assegnato.
+</div>
+<!-- Modal Prompt -->
+<div class="modal fade" id="promptModal" tabindex="-1" aria-labelledby="promptModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="promptModalLabel">Prompt generato per ChatGPT</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <textarea class="form-control" rows="10" readonly id="prompt-text"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-playon" onclick="copyPrompt()">📋 Copia prompt</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  /* Altezza dinamica su schermi larghi */
+  .scroll-column,
+  .list-group {
+    max-height: calc(100vh - 340px);
+    overflow-y: auto;
+  }
+
+  /* Ottimizzazione per tablet e mobile */
+  @media (max-width: 768px) {
+    .scroll-column,
+    .list-group {
+      max-height: calc(100vh - 250px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .scroll-column,
+    .list-group {
+      max-height: calc(100vh - 200px);
+    }
+  }
+</style>
+
+<script id="player-data" type="application/json">{{ player_data|safe }}</script>
+<script id="saved-votes" type="application/json">{{ saved_votes|default:'{}'|safe }}</script>
+<script id="max-players" type="application/json">{{ match.players_per_team }}</script>
+
+
+<script>
+function getCsrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function salvaSquadreInSessione(callback = null) {
+  const team1Ids = players.filter(p => p.team === 'team1').map(p => p.id);
+  const team2Ids = players.filter(p => p.team === 'team2').map(p => p.id);
+
+  fetch(`/matches/{{ match.id }}/salva_squadre_sessione/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCsrfToken()
+    },
+    body: JSON.stringify({
+      team1: team1Ids,
+      team2: team2Ids
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Errore salvataggio sessione");
+    return response.json();
+  })
+  .then(data => {
+    if (callback) callback();
+  })
+  .catch(error => {
+    console.error("Errore:", error);
+  });
+}
+
+function salvaSquadreEdEsporta() {
+  salvaSquadreInSessione(() => {
+    const form = document.getElementById("exportForm");
+    if (form) {
+      form.submit();
+    } else {
+      console.error("Export form non trovato nel DOM.");
+    }
+  });
+}
+</script>

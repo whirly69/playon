@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Statistiche Partita{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Statistiche della partita del {{ match.date }}</h2>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped shadow-sm">
+      <thead>
+        <tr>
+          <th>Giocatore</th>
+          <th>Squadra</th>
+          <th>Goal</th>
+          <th>Voto</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stat in player_stats %}
+          <tr>
+            <td>{{ stat.player.name }}</td>
+            <td>
+              {% if stat.team == 'team1' %}Rossi
+              {% elif stat.team == 'team2' %}Blu
+              {% else %}-{% endif %}
+            </td>
+            <td>{{ stat.goals }}</td>
+            <td>{{ stat.vote|default:"-" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

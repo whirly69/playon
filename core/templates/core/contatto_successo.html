@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Richiesta Inviata{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <h2 class="text-success">✅ Richiesta inviata con successo</h2>
+  <p class="lead">Grazie per il tuo contributo! Il nostro team prenderà in carico la segnalazione.</p>
+  <a href="{% url 'homepage' %}" class="btn btn-outline-primary mt-3">Torna alla Home</a>
+</div>
+{% endblock %}

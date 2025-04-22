@@ -1,0 +1,19 @@
+
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Registrazione{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <h2 class="mb-4">Crea una nuova partita</h2>
+      <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-playon w-100 mt-3">Crea</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
