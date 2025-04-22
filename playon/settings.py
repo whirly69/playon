@@ -154,12 +154,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# URL da usare nei template per i file statici
+STATIC_URL = '/static/'
+
+# Cartelle da cui prendere i file statici durante lo sviluppo
 STATICFILES_DIRS = [
     BASE_DIR / "static",
-   
 ]
+
+# Cartella dove Django raccoglie TUTTI i file statici (usata da collectstatic)
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_URL = '/static/'
 
 
 
