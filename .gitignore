@@ -25,8 +25,7 @@ db.sqlite3
 .vscode/
 
 # File di configurazione segreti (se usi .env)
-.env
-playon/config.json
+playon/setup.json
 # Static e media generati (se non li vuoi tracciare)
 staticfiles/
 media/
