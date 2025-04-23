@@ -20,7 +20,7 @@
         <div class="accordion-item">
           <h2 class="accordion-header" id="heading{{ join_request.id }}">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ join_request.id }}" aria-expanded="false" aria-controls="collapse{{ join_request.id }}">
-              {{ join_request.user.get_full_name }} → <strong class="ms-2">{{ group.name }}</strong>
+              <strong class="me-2">User:</strong>  {{ join_request.user }} - {{ join_request.user.get_full_name }} → <strong class="ms-2">{{ group.name }}</strong>
             </button>
           </h2>
           <div id="collapse{{ join_request.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ join_request.id }}" data-bs-parent="#requestAccordion">
