@@ -38,7 +38,7 @@ SECRET_KEY = get_secret('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(get_secret('DEBUG'))
 
-ALLOWED_HOSTS = get_secret('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS = get_secret('ALLOWED_HOSTS')
 
 
 # Application definition
