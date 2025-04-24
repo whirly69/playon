@@ -30,7 +30,7 @@
                     {% if request.user == match.created_by and player.id in riproposti %}
                       <br><small class="text-warning">🔁 (di nuovo disponibile)</small>
                     {% endif %}
-
+                  <br>
                   {% if player.role %}
                     <small class="text-muted">({{ player.role.name }})</small>
                   {% endif %}
@@ -39,7 +39,7 @@
                     {% if player.id in declined_after_accept %}
                       <br><span class="text-danger">⛔ Non più disponibile</span>
                     {% else %}
-                      <br><span class="text-danger">❌ Non disponibile</span>
+                      <span class="text-danger">❌ Non disponibile</span>
                       {% if request.user == match.created_by and player.id in riproposti %}
                         <br><small class="text-warning">🔁 (di nuovo disponibile)</small>
                       {% endif %}
