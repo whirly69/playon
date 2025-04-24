@@ -49,7 +49,7 @@
                 <div class="text-end">
                   {% if status == 'confirmed' %}
                     <span class="text-success me-2">✅</span>
-                  {% elif status == 'invited' %}
+                  {% elif status == 'invited' and player.user %}
                     <span class="text-muted me-2">🕓 In attesa</span>
                   {% endif %}
                   

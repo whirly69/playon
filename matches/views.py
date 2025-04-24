@@ -209,8 +209,11 @@ def manage_convocations(request, match_id):
                                 link=reverse('respond_to_convocation', args=[match.id, 'disdici']) if time_left >= timedelta(hours=24) else ""
                             )
                 else:
-                    if conv.status in ['invited', 'confirmed']:
-                        conv.delete()
+                    # if conv.status in ['invited', 'confirmed']:
+                    #     conv.delete()
+                    if conv.status == 'confirmed':
+                        conv.status = 'invited'
+                        conv.save()
 
             messages.success(request, "Convocazioni aggiornate con successo.")
             return redirect('match_list')
