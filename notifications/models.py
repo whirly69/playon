@@ -6,7 +6,7 @@ class Notification(models.Model):
     match = models.ForeignKey("matches.Match", on_delete=models.CASCADE, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications' )
     message = models.TextField()
-    link = models.URLField(blank=True, null=True)
+    link = models.CharField(blank=True, null=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
