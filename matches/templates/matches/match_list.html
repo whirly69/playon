@@ -56,7 +56,27 @@
               {% if match.score_team1 != None and match.score_team2 != None %}
                 <div class="row text-center mt-2">
                   <div class="col-6">
-                    <div class="text-danger fw-bold">ROSSI</div>
+                    <div class="text-danger fw-bold">
+                      <span
+                        tabindex="0"
+                        class="text-decoration-underline text-danger"
+                        role="button"
+                        data-bs-toggle="popover"
+                        data-bs-trigger="hover focus"
+                        data-bs-html="true"
+                        data-bs-placement="top"
+                        title="Formazione ROSSI"
+                        data-bs-content="
+                          {% for player in match.matchteamassignment_set.all %}
+                            {% if player.team == 'team1' %}
+                              {{ player.player.name }}<br>
+                            {% endif %}
+                          {% endfor %}
+                        "
+                      >
+                      ROSSI
+                      </span>
+                    </div>
                     <div class="fs-4">{{ match.score_team1 }}</div>
                     <ul class="list-unstyled small mt-2">
                       {% for perf in match.matchperformance_set.all %}
@@ -71,7 +91,27 @@
                     
                   </div>
                   <div class="col-6">
-                    <div class="text-primary fw-bold">BLU</div>
+                    <div class="text-primary fw-bold">
+                      <span
+                        tabindex="0"
+                        class="text-decoration-underline text-primary"
+                        role="button"
+                        data-bs-toggle="popover"
+                        data-bs-trigger="hover focus"
+                        data-bs-html="true"
+                        data-bs-placement="top"
+                        title="Formazione BLU"
+                        data-bs-content="
+                          {% for player in match.matchteamassignment_set.all %}
+                            {% if player.team == 'team2' %}
+                              {{ player.player.name }}<br>
+                            {% endif %}
+                          {% endfor %}
+                        "
+                      >
+                      BLU
+                      </span>
+                    </div>
                     <div class="fs-4">{{ match.score_team2 }}</div>
                     <ul class="list-unstyled small mt-2">
                       {% for perf in match.matchperformance_set.all %}
@@ -238,6 +278,12 @@
       scorerDiv.appendChild(select);
     }
   }
+  document.addEventListener('DOMContentLoaded', function () {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl)
+    })
+  });
   </script>
   <style>
   /* Altezza dinamica su schermi larghi */
