@@ -14,8 +14,11 @@ def group_stats_view(request):
     order_by = request.GET.get("order_by", "presences")
     view_mode = request.GET.get("view", "table")
     group_id = request.GET.get("group_id")
-
     user_groups = Group.objects.filter(Q(created_by=request.user) | Q(player__user=request.user)).distinct()
+    if not group_id and user_groups.exists():
+     group_id = user_groups.first().id
+
+    
     # Recupera le partite giocate del gruppo
     matches = Match.objects.filter(
         group__id=group_id,
@@ -23,6 +26,13 @@ def group_stats_view(request):
         score_team2__isnull=False,
         is_cancelled=False
     )
+    # print("DEBUG STAMPA TUTTI I MATCH:")
+    # for match in Match.objects.all():
+    #     print(f"ID: {match.id}, group_id: {match.group_id}, cancelled: {match.is_cancelled}, score1: {match.score_team1}, score2: {match.score_team2}")
+
+    # print("DEBUG PARAMETRO RICEVUTO NEL GET:")
+    # print("group:", request.GET.get("group"))
+    # print("group_id:", request.GET.get("group_id"))
     team1_wins = 0
     team2_wins = 0
     draws = 0
