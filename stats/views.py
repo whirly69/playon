@@ -16,7 +16,24 @@ def group_stats_view(request):
     group_id = request.GET.get("group_id")
 
     user_groups = Group.objects.filter(Q(created_by=request.user) | Q(player__user=request.user)).distinct()
+    # Recupera le partite giocate del gruppo
+    matches = Match.objects.filter(
+        group_id=group_id,
+        score_team1__isnull=False,
+        score_team2__isnull=False,
+        is_cancelled=False
+    )
+    team1_wins = 0
+    team2_wins = 0
+    draws = 0
 
+    for match in matches:
+        if match.score_team1 > match.score_team2:
+            team1_wins += 1
+        elif match.score_team1 < match.score_team2:
+            team2_wins += 1
+        else:
+            draws += 1
     if not group_id and user_groups.exists():
         group_id = user_groups.first().id
 
@@ -45,6 +62,9 @@ def group_stats_view(request):
         "selected_role": role_filter,
         "selected_order_by": order_by,
         "selected_view": view_mode,
+        "team1_wins": team1_wins,
+        "team2_wins": team2_wins,
+        "draws": draws,
     })
 
 

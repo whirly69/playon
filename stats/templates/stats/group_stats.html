@@ -10,6 +10,13 @@
     <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 50px;">
     <h2 class="mt-2">Statistiche del Gruppo <span class="text-primary">Gruppo</span></h2>
     <p class="text-muted">Consulta performance e voti dei tuoi compagni</p>
+    <div class="text-center my-3">
+      <small>
+        🟥 <span class="text-danger">Vittorie ROSSI: {{ team1_wins }}</span> |
+        🟦 <span class="text-primary">Vittorie BLU: {{ team2_wins }}</span> |
+        🤝 <span class="text-secondary">Pareggi: {{ draws }}</span>
+      </small>
+    </div>
   </div>
   <!-- Aggiunta selezione gruppo -->
   <div class="col-md-4">
