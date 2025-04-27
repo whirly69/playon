@@ -18,7 +18,7 @@ def group_stats_view(request):
     user_groups = Group.objects.filter(Q(created_by=request.user) | Q(player__user=request.user)).distinct()
     # Recupera le partite giocate del gruppo
     matches = Match.objects.filter(
-        group_id=group_id,
+        group__id=group_id,
         score_team1__isnull=False,
         score_team2__isnull=False,
         is_cancelled=False
