@@ -147,39 +147,7 @@ def review_match_votes(request, match_id):
         "user_has_commented": user_has_commented,
     })
 
-# @login_required
-# def player_stats_detail(request, player_id):
-#     player = get_object_or_404(Player, id=player_id)
 
-#     # Ottieni il gruppo selezionato dalla query string (?group=...)
-#     group_id = request.GET.get("group")
-#     if not group_id:
-#         messages.error(request, "Gruppo non specificato.")
-#         return redirect("group_stats")
-
-#     matches = Match.objects.filter(
-#         group_id=group_id,
-#         is_cancelled=False,
-#         score_team1__isnull=False,
-#         score_team2__isnull=False,
-#     )
-#     performances = MatchPerformance.objects.filter(player=player, match__in=matches)
-#     votes = PlayerVote.objects.filter(voted_player=player, match__in=matches).select_related("voter")
-
-#     match_data = []
-#     for match in matches:
-#         goal_entry = performances.filter(match=match).first()
-#         player_votes = votes.filter(match=match)
-#         match_data.append({
-#             "match": match,
-#             "goals": goal_entry.goals if goal_entry else 0,
-#             "votes": player_votes
-#         })
-
-#     return render(request, "stats/player_stats_detail.html", {
-#         "player": player,
-#         "match_data": match_data,
-#     })
 @login_required
 def player_stats_detail(request, player_id):
     player = get_object_or_404(Player, id=player_id)
@@ -190,16 +158,25 @@ def player_stats_detail(request, player_id):
         messages.error(request, "Gruppo non specificato.")
         return redirect("group_stats")
 
+    # Prendi TUTTE le partite valide di quel gruppo
     matches = Match.objects.filter(
-        group_id=group_id,
+        group__id=group_id,
         is_cancelled=False,
         score_team1__isnull=False,
         score_team2__isnull=False,
     )
 
+    # Trova solo i match dove il giocatore era assegnato
+    assignments = MatchTeamAssignment.objects.filter(player=player, match__in=matches)
+
+    # Qui estrai direttamente la lista di match_id
+    match_ids = assignments.values_list('match_id', flat=True)
+
+    # Ora carichi SOLO le partite dove lui ha partecipato
+    matches = matches.filter(id__in=match_ids)
+
     performances = MatchPerformance.objects.filter(player=player, match__in=matches)
     votes = PlayerVote.objects.filter(voted_player=player, match__in=matches).select_related("voter")
-    assignments = MatchTeamAssignment.objects.filter(player=player, match__in=matches).select_related("match")
 
     match_data = []
     team1_presences = 0
