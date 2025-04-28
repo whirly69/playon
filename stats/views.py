@@ -191,6 +191,14 @@ def player_stats_detail(request, player_id):
         player_votes = votes.filter(match=match)
         goals = goal_entry.goals if goal_entry else 0
 
+        # Trova tutti i convocati alla partita (User che possono votare)
+        convocati = MatchTeamAssignment.objects.filter(match=match).select_related('player__user')
+        # Ora controlliamo chi ha votato e chi no
+        voted_user_ids = [v.voter.id for v in player_votes]
+        missing_voters = []
+        for assignment in convocati:
+            if assignment.player.user and assignment.player.user.id not in voted_user_ids:
+                missing_voters.append(assignment.player.user)
         if team == "team1":
             team1_presences += 1
             team1_goals += goals
@@ -202,7 +210,8 @@ def player_stats_detail(request, player_id):
             "match": match,
             "team": team,
             "goals": goals,
-            "votes": player_votes
+            "votes": player_votes,
+            "missing_voters": missing_voters,
         })
 
     return render(request, "stats/player_stats_detail.html", {

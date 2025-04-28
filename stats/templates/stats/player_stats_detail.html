@@ -41,6 +41,11 @@
                                     {{ vote.vote }} ⭐ – da {{ vote.voter.get_full_name|default:vote.voter.username }}
                                 </li>
                             {% endfor %}
+                            {% for missing_user in entry.missing_voters %}
+                                <li class="list-group-item text-muted">
+                                    {{ missing_user.get_full_name|default:missing_user.username }} non ha ancora votato
+                                </li>
+                            {% endfor %}
                         </ul>
                     {% else %}
                         <p>Nessun voto ricevuto.</p>
