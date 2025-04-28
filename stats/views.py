@@ -198,8 +198,12 @@ def player_stats_detail(request, player_id):
         missing_voters = []
         for assignment in convocati:
             if assignment.player.user:
-                if assignment.player.user.id != player.user.id and assignment.player.user.id not in voted_user_ids:
-                    missing_voters.append(assignment.player.user)
+                if player.user:  # controlliamo che il player che stiamo guardando abbia user
+                    if assignment.player.user.id != player.user.id and assignment.player.user.id not in voted_user_ids:
+                        missing_voters.append(assignment.player.user)
+                else:
+                    if assignment.player.user.id not in voted_user_ids:
+                        missing_voters.append(assignment.player.user)
         if team == "team1":
             team1_presences += 1
             team1_goals += goals
