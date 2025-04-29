@@ -9,7 +9,10 @@ from django.utils import timezone
 
 @login_required
 def notification_list(request):
-    notifications = Notification.objects.filter(user=request.user).order_by("-created_at")
+    notifications = Notification.objects.filter(user=request.user).exclude(
+    match__score_team1__isnull=False,
+    match__score_team2__isnull=False
+    ).order_by("-created_at")
 
     match_times = {}
     now = timezone.now()

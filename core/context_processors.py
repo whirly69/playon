@@ -16,6 +16,9 @@ def dashboard_counters(request):
         # notifiche non lette per qualsiasi ruolo
         counters['unread_notifications'] = Notification.objects.filter(
             user=request.user, is_read=False
+        ).exclude(
+            match__score_team1__isnull=False,
+            match__score_team2__isnull=False
         ).count()
 
         return counters
