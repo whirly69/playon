@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.mail import send_mail
 from django.contrib import messages
 from django.templatetags.static import static
 from django.contrib.auth.decorators import login_required
@@ -104,6 +105,16 @@ def match_create(request):
                     message=f"Sei stato convocato per la partita del {match.date.strftime('%d/%m/%Y')} alle {match.time.strftime('%H:%M')}",
                     link=reverse('respond_to_convocation', args=[match.id, 'none'])
                 )
+                if player.user and player.user.email:
+                    try:
+                        send_personalized_match_email(
+                            to_email=player.user.email,
+                            player_name=player.user.get_full_name() or player.user.username,
+                            match=match
+                        )
+                    except Exception as e:
+                        print(f"Errore invio email a {player.user.email}: {e}")
+           
             return redirect('manage_convocations', match_id=match.id)
     else:
         form = MatchForm()
@@ -807,3 +818,25 @@ def match_comments(request, match_id):
         "match": match,
         "comments": comments
     })
+
+def send_personalized_match_email(to_email, player_name, match):
+    subject = f"📅 Nuova partita creata: {match.date} alle {match.time.strftime('%H:%M')}"
+    message = (
+        
+        f"Ciao {player_name},\n\n"
+        f"È stata creata una nuova partita nel gruppo {match.group.name}!\n"
+        f"📅 Data: {match.date}\n"
+        f"🕒 Ora: {match.time.strftime('%H:%M')}\n"
+        f"🏟️ Struttura: {match.structure.name if match.structure else 'Da definire'}\n\n"
+        f"👉 Rispondi subito alla notifica per accettare o rifiutare la partecipazione:\n"
+        f"http://playonapp.it/notification\n\n"
+        f"A presto su PlayOn! ⚽"
+    )
+    
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [to_email],  # Attenzione: lista singola, così nessuno vede altri destinatari!
+        fail_silently=False,
+    )
