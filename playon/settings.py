@@ -53,7 +53,7 @@ INSTALLED_APPS = [
 
     "crispy_forms",
     "crispy_bootstrap5",
-
+    "sendgrid_backend",
     "accounts",
     "groups",
     "matches",
