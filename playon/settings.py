@@ -173,12 +173,9 @@ ENABLE_EMAILS = bool(get_secret('ENABLE_EMAILS'))
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'ssl0.ovh.net'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = get_secret('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = get_secret('EMAIL_HOST_PASSWORD')
-    DEFAULT_FROM_EMAIL = f'PlayOn <{EMAIL_HOST_USER}>'
-    SIGNALS_DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL
+    EMAIL_BACKEND = get_secret('EMAIL_BACKEND')
+    SENDGRID_API_KEY = get_secret('SENDGRID_API_KEY')
+    DEFAULT_FROM_EMAIL = get_secret('DEFAULT_FROM_EMAIL')
+    SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+    
 
