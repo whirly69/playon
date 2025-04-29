@@ -183,6 +183,9 @@ def player_stats_detail(request, player_id):
     team2_presences = 0
     team1_goals = 0
     team2_goals = 0
+    mvp_total = 0
+    mvp_team1 = 0
+    mvp_team2 = 0
 
     for match in matches:
         assignment = next((a for a in assignments if a.match_id == match.id), None)
@@ -190,7 +193,13 @@ def player_stats_detail(request, player_id):
         goal_entry = performances.filter(match=match).first()
         player_votes = votes.filter(match=match)
         goals = goal_entry.goals if goal_entry else 0
-
+        player_mvp = MatchMVPVote.objects.filter(match=match, voted_player=player).exists()
+        if player_mvp:
+            mvp_total += 1
+            if team == "team1":
+                mvp_team1 += 1
+            elif team == "team2":
+                mvp_team2 += 1
         # Trova tutti i convocati alla partita (User che possono votare)
         convocati = MatchTeamAssignment.objects.filter(match=match).select_related('player__user')
         # Ora controlliamo chi ha votato e chi no
@@ -217,6 +226,7 @@ def player_stats_detail(request, player_id):
             "goals": goals,
             "votes": player_votes,
             "missing_voters": missing_voters,
+            "is_mvp": player_mvp,
         })
 
     return render(request, "stats/player_stats_detail.html", {
@@ -227,6 +237,9 @@ def player_stats_detail(request, player_id):
         "team2_presenze": team2_presences,
         "team1_goals": team1_goals,
         "team2_goals": team2_goals,
+        "mvp_total": mvp_total,
+        "mvp_team1": mvp_team1,
+        "mvp_team2": mvp_team2,
     })
 
 def update_average_votes(group):

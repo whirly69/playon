@@ -10,8 +10,15 @@
       </div>
     <div class="alert bg-light border border-secondary">
         Presenze totali: <strong>{{ presenze_totali }}</strong><br>
-        🔴 Presenze nei ROSSI: {{ team1_presenze }}  - Goal realizzati con i ROSSI {{ team1_goals }} <br>
-        🔵 Presenze nei BLU: {{ team2_presenze }} - Goal realizzati con i BLU {{ team2_goals }} 
+        Eletto MVP: <strong>{{ mvp_total }}</strong> volt{% if mvp_total != 1 %}e{% else %}a{% endif %}<br><br>
+        
+        🔴 Presenze nei ROSSI: {{ team1_presenze }} <br>
+        🔴 Goal realizzati con i ROSSI {{ team1_goals }}<br>
+        🔴 MVP con i ROSSI: {{ mvp_team1 }}<br><br>
+        
+        🔵 Presenze nei BLU: {{ team2_presenze }}<br>
+        🔵 Goal realizzati con i BLU {{ team2_goals }}<br>
+        🔵 MVP con i BLU: {{ mvp_team2 }}
       </div>
     <div class="accordion mt-4" id="matchAccordion">
         {% for entry in match_data %}
@@ -27,6 +34,11 @@
                   {% elif entry.team == "team2" %}
                     <span class="badge bg-primary ms-2">BLU</span>
                   {% endif %}
+                  {% if entry.is_mvp %}
+                    <span class="badge bg-warning text-dark ms-2">⭐ MVP</span>
+                  {% endif %}
+                  
+
                 </button>
             </div>
             
