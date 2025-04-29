@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.templatetags.static import static
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden, JsonResponse
-from django.db.models import Count, Q, Avg
+from django.db.models import Count, Q, Prefetch
 from django.shortcuts import render, redirect,get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
@@ -19,7 +19,7 @@ from stats.models import PlayerStats
 from notifications.views import create_or_update_notification
 from collections import  Counter, defaultdict
 from statistics import mean
-from datetime import date
+from datetime import date,timedelta
 import markdown
 import json
 import os
@@ -112,61 +112,147 @@ def match_create(request):
 
 
 
+# @login_required
+# def match_list(request):
+#     filter_option = request.GET.get('filter', 'all')
+#     user_groups = Group.objects.filter(Q(player__user=request.user) | Q(created_by=request.user)).distinct()
+#     matches = Match.objects.filter(
+#         Q(group__in=user_groups) | Q(is_public=True)
+#     ).distinct().order_by('-date', '-time')
+    
+    
+#     if filter_option == 'future':
+#         matches = matches.filter(date__gte=date.today())
+#     elif filter_option == 'my':
+#         matches = matches.filter(created_by=request.user)
+
+#     match_has_teams = {
+#         match.id: MatchTeamAssignment.objects.filter(match=match).exists()
+#         for match in matches
+#     }
+    
+#     # ✅ Calcola i marcatori per ciascuna squadra
+#     match_scorers_map = {}
+#     for match in matches:
+#         team1_ids = MatchTeamAssignment.objects.filter(match=match, team="team1").values_list("player_id", flat=True)
+#         team2_ids = MatchTeamAssignment.objects.filter(match=match, team="team2").values_list("player_id", flat=True)
+
+#         performances = MatchPerformance.objects.filter(match=match).select_related("player")
+#         scorers_team1 = [p for p in performances if p.player.id in team1_ids]
+#         scorers_team2 = [p for p in performances if p.player.id in team2_ids]
+
+#         match_scorers_map[match.id] = {
+#             "team1": scorers_team1,
+#             "team2": scorers_team2,
+#         }
+
+#     match_mvp_map = {}
+#     for match in matches:
+#         mvp_votes = MatchMVPVote.objects.filter(match=match)
+#         if mvp_votes.exists():
+#             top_voted = (
+#                 mvp_votes.values('voted_player')
+#                 .annotate(count=Count('id'))
+#                 .order_by('-count')
+#                 .first()
+#             )
+#             mvp_player = Player.objects.get(id=top_voted['voted_player'])
+#             match_mvp_map[match.id] = {
+#                 "name": mvp_player.name,
+#                 "votes": top_voted['count'],
+#             }
+
+#     # ✅ Calcola la presenza di commenti per ogni match (spostato fuori dal blocco MVP)
+#     match_has_comments = {
+#         match.id: MatchComment.objects.filter(match=match).exists()
+#         for match in matches
+#     }
+
+#     return render(request, 'matches/match_list.html', {
+#         'matches': matches,
+#         'match_has_teams': match_has_teams,
+#         'filter': filter_option,
+#         'match_scorers_map': match_scorers_map,
+#         'match_mvp_map': match_mvp_map,
+#         'match_has_comments': match_has_comments,
+#     })
 @login_required
 def match_list(request):
-    filter_option = request.GET.get('filter', 'all')
-    user_groups = Group.objects.filter(Q(player__user=request.user) | Q(created_by=request.user)).distinct()
+    # Recupera i gruppi dell'utente
+    user_groups = Group.objects.filter(
+        Q(player__user=request.user) | Q(created_by=request.user)
+    ).distinct()
+
+    # Precarica matches
     matches = Match.objects.filter(
         Q(group__in=user_groups) | Q(is_public=True)
+    ).select_related('structure', 'group', 'created_by') \
+    .prefetch_related(
+        'matchteamassignment_set',
+        'matchperformance_set__player',
+        'matchmvpvote_set',
+        'matchcomment_set',
     ).distinct().order_by('-date', '-time')
-    
-    
+
+    # ➡️ Ora filtra future/my
+    filter_option = request.GET.get('filter', 'all')
+
     if filter_option == 'future':
         matches = matches.filter(date__gte=date.today())
     elif filter_option == 'my':
         matches = matches.filter(created_by=request.user)
 
-    match_has_teams = {
-        match.id: MatchTeamAssignment.objects.filter(match=match).exists()
-        for match in matches
-    }
+    # ✅ Solo adesso costruiamo TUTTI i dizionari sui match filtrati
+    today = date.today()
 
-    # ✅ Calcola i marcatori per ciascuna squadra
+    match_has_teams = {}
     match_scorers_map = {}
-    for match in matches:
-        team1_ids = MatchTeamAssignment.objects.filter(match=match, team="team1").values_list("player_id", flat=True)
-        team2_ids = MatchTeamAssignment.objects.filter(match=match, team="team2").values_list("player_id", flat=True)
+    match_mvp_map = {}
+    match_has_comments = {}
+    match_votation_expired = {}
+    match_votation_days_left = {}
 
-        performances = MatchPerformance.objects.filter(match=match).select_related("player")
-        scorers_team1 = [p for p in performances if p.player.id in team1_ids]
-        scorers_team2 = [p for p in performances if p.player.id in team2_ids]
+    for match in matches:
+        match_has_teams[match.id] = match.matchteamassignment_set.exists()
+
+        team1_players = [a.player.id for a in match.matchteamassignment_set.all() if a.team == "team1"]
+        team2_players = [a.player.id for a in match.matchteamassignment_set.all() if a.team == "team2"]
+
+        scorers_team1 = [p for p in match.matchperformance_set.all() if p.player.id in team1_players]
+        scorers_team2 = [p for p in match.matchperformance_set.all() if p.player.id in team2_players]
 
         match_scorers_map[match.id] = {
             "team1": scorers_team1,
             "team2": scorers_team2,
         }
 
-    match_mvp_map = {}
-    for match in matches:
-        mvp_votes = MatchMVPVote.objects.filter(match=match)
-        if mvp_votes.exists():
+        if match.matchmvpvote_set.exists():
             top_voted = (
-                mvp_votes.values('voted_player')
+                match.matchmvpvote_set.values('voted_player')
                 .annotate(count=Count('id'))
                 .order_by('-count')
                 .first()
             )
-            mvp_player = Player.objects.get(id=top_voted['voted_player'])
-            match_mvp_map[match.id] = {
-                "name": mvp_player.name,
-                "votes": top_voted['count'],
-            }
+            if top_voted:
+                mvp_player = Player.objects.get(id=top_voted['voted_player'])
+                match_mvp_map[match.id] = {
+                    "name": mvp_player.name,
+                    "votes": top_voted['count'],
+                }
 
-    # ✅ Calcola la presenza di commenti per ogni match (spostato fuori dal blocco MVP)
-    match_has_comments = {
-        match.id: MatchComment.objects.filter(match=match).exists()
-        for match in matches
-    }
+        match_has_comments[match.id] = match.matchcomment_set.exists()
+
+        if match.score_team1 is not None and match.score_team2 is not None:
+            votation_deadline = match.date + timedelta(days=4)
+            if today > votation_deadline:
+                match_votation_expired[match.id] = True
+                match_votation_days_left[match.id] = 0
+            else:
+                match_votation_expired[match.id] = False
+                match_votation_days_left[match.id] = (votation_deadline - today).days
+        else:
+            match_votation_expired[match.id] = False
+            match_votation_days_left[match.id] = None
 
     return render(request, 'matches/match_list.html', {
         'matches': matches,
@@ -175,8 +261,9 @@ def match_list(request):
         'match_scorers_map': match_scorers_map,
         'match_mvp_map': match_mvp_map,
         'match_has_comments': match_has_comments,
+        'match_votation_expired': match_votation_expired,
+        'match_votation_days_left': match_votation_days_left,
     })
-
 
 @login_required
 def manage_convocations(request, match_id):

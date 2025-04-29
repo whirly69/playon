@@ -79,13 +79,13 @@
                     </div>
                     <div class="fs-4">{{ match.score_team1 }}</div>
                     <ul class="list-unstyled small mt-2">
-                      {% for perf in match.matchperformance_set.all %}
-                        {% if perf.goals > 0 and perf.player.matchteamassignment_set.first.team == "team1" %}
-                          <li>{{ perf.player.name }} ×{{ perf.goals }}</li>
-                        {% endif %}
-                        
-
-                      {% endfor %}
+                      {% with match_scorers_map|get_item:match.id as scorers %}
+                        {% for perf in scorers.team1 %}
+                          {% if perf.goals > 0 %}
+                            <li>{{ perf.player.name }} ×{{ perf.goals }}</li>
+                          {% endif %}
+                        {% endfor %}
+                      {% endwith %}
                       
                     </ul>
                     
@@ -114,11 +114,13 @@
                     </div>
                     <div class="fs-4">{{ match.score_team2 }}</div>
                     <ul class="list-unstyled small mt-2">
-                      {% for perf in match.matchperformance_set.all %}
-                        {% if perf.goals > 0 and perf.player.matchteamassignment_set.first.team == "team2" %}
-                          <li>{{ perf.player.name }} ×{{ perf.goals }}</li>
-                        {% endif %}
-                      {% endfor %}
+                      {% with match_scorers_map|get_item:match.id as scorers %}
+                        {% for perf in scorers.team2 %}
+                          {% if perf.goals > 0 %}
+                            <li>{{ perf.player.name }} ×{{ perf.goals }}</li>
+                          {% endif %}
+                        {% endfor %}
+                      {% endwith %}
                     </ul>
                   </div>
                   {% with match_mvp_map|get_item:match.id as mvp %}
@@ -152,14 +154,30 @@
                 
                   {% if match.score_team1 != None and match.score_team2 != None %}
                     <button class="btn btn-sm btn-outline-secondary w-100 w-md-50" disabled>❌ Annulla (già giocata)</button>
-                    {%  if user|is_confirmed_convocated:match and match.score_team1 != None and match.score_team2 != None %}
-                      <a href="{% url 'review_match_votes' match.id %}" class="btn btn-sm btn-outline-info w-100 w-md-50">📊 Statistiche e voti</a>
-                          {% if match_has_comments|get_item:match.id %}
-                            <a href="{% url 'match_comments' match.id %}" class="btn btn-sm btn-outline-secondary w-100 w-md-50 ">
-                              💬 Mostra commenti
-                            </a>
+                    {% if user|is_confirmed_convocated:match and match.score_team1 != None and match.score_team2 != None %}
+                      {% if match_votation_expired|get_item:match.id %}
+                        <button class="btn btn-sm btn-outline-secondary w-100 w-md-50" disabled>
+                          ⏳ Tempo votazioni scaduto
+                        </button>
+                      {% else %}
+                      <a href="{% url 'review_match_votes' match.id %}" class="btn btn-sm btn-outline-info w-100 w-md-50 d-flex justify-content-between align-items-center">
+                        <span>📊 Statistiche e voti</span>
+                      
+                        {% if match_votation_days_left|get_item:match.id != None %}
+                          {% if match_votation_days_left|get_item:match.id == 0 %}
+                            <span class="badge rounded-pill bg-danger ms-2">Ultime ore!</span>
+                          {% elif match_votation_days_left|get_item:match.id <= 2 %}
+                            <span class="badge rounded-pill bg-warning text-dark ms-2">{{ match_votation_days_left|get_item:match.id }} giorni</span>
+                          {% else %}
+                            <span class="badge rounded-pill bg-success ms-2">{{ match_votation_days_left|get_item:match.id }} giorni</span>
                           {% endif %}
+                        {% endif %}
+                      </a>
+                      
+                      
+                      {% endif %}
                     {% endif %}
+
 
                   {% else %}
                     {% if match.is_cancelled %}
@@ -170,14 +188,36 @@
 
                   {% endif %}
               {% else %}
-                {%  if user|is_confirmed_convocated:match and match.score_team1 != None and match.score_team2 != None  %}
-                  <a href="{% url 'review_match_votes' match.id %}" class="btn btn-sm btn-outline-info w-100 w-md-50">📊 Statistiche e voti</a>
-                  {% if match_has_comments|get_item:match.id %}
+              {% if user|is_confirmed_convocated:match and match.score_team1 != None and match.score_team2 != None %}
+                {% if match_votation_expired|get_item:match.id %}
+                  <button class="btn btn-sm btn-outline-secondary w-100 w-md-50" disabled>
+                    ⏳ Tempo votazioni scaduto
+                  </button>
+                {% else %}
+                <a href="{% url 'review_match_votes' match.id %}" class="btn btn-sm btn-outline-info w-100 w-md-50 d-flex justify-content-between align-items-center">
+                  <span>📊 Statistiche e voti</span>
+                
+                  {% if match_votation_days_left|get_item:match.id != None %}
+                    {% if match_votation_days_left|get_item:match.id == 0 %}
+                      <span class="badge rounded-pill bg-danger ms-2">Ultime ore!</span>
+                    {% elif match_votation_days_left|get_item:match.id <= 2 %}
+                      <span class="badge rounded-pill bg-warning text-dark ms-2">{{ match_votation_days_left|get_item:match.id }} giorni</span>
+                    {% else %}
+                      <span class="badge rounded-pill bg-success ms-2">{{ match_votation_days_left|get_item:match.id }} giorni</span>
+                    {% endif %}
+                  {% endif %}
+                </a>
+                
+                
+                {% endif %}
+                {% if match_has_comments|get_item:match.id %}
                             <a href="{% url 'match_comments' match.id %}" class="btn btn-sm btn-outline-secondary w-100 w-md-50 ">
                               💬 Mostra commenti
                             </a>
-                    {% endif %}
                 {% endif %}
+              {% endif %}
+            
+                
                 
               {% endif %}
               {% if not match.is_cancelled %}
