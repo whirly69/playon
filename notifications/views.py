@@ -32,7 +32,13 @@ def notification_list(request):
                 }
         else:
             match_times[n.id] = None
-
+    # Marca come lette tutte le notifiche legate a partite giocate
+    Notification.objects.filter(
+        user=request.user,
+        is_read=False,
+        match__score_team1__isnull=False,
+        match__score_team2__isnull=False,
+    ).update(is_read=True)
     return render(request, "notifications/notification_list.html", {
         "notifications": notifications,
         "match_times": match_times
