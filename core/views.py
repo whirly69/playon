@@ -1,8 +1,10 @@
+from django.conf import settings
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Q
-from django.core.mail import send_mail
+from django.core.mail import send_mail, BadHeaderError
+from django.http import HttpResponse
 from groups.models import Group, GroupJoinRequest, Player
 from matches.models import Match
 from notifications.models import Notification
@@ -20,14 +22,13 @@ def contatto_view(request):
             subject = f"[PlayOn - {tipo.upper()}] da {mittente}"
             body = f"Utente: {mittente} ({request.user.email})\n\n{messaggio}"
 
-            send_mail(subject, body, 'no-reply@playon.it', ['riohitech@gmail.com'])
+            send_mail(subject, body, 'noreply@playonapp.it', ['riohitech@gmail.com'])
 
             return render(request, 'core/contatto_successo.html')
     else:
         form = ContattoForm()
 
     return render(request, 'core/contatto.html', {'form': form})
-
 
 
 
