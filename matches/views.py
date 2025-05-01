@@ -215,7 +215,7 @@ def match_list(request):
 
     # ✅ Solo adesso costruiamo TUTTI i dizionari sui match filtrati
     today = date.today()
-
+    match_whatsapp_message = {}
     match_has_teams = {}
     match_scorers_map = {}
     match_mvp_map = {}
@@ -236,7 +236,19 @@ def match_list(request):
             "team1": scorers_team1,
             "team2": scorers_team2,
         }
+        structure_name = match.structure.name if match.structure else "da definire"
+        link = f"https://playonapp.it/notification"
 
+        msg = (
+            f"Sei pronto per una nuova partita?\n"
+            f"Data: {match.date.strftime('%d/%m/%Y')}\n"
+            f"Ora: {match.time.strftime('%H:%M')}\n"
+            f"Struttura: {structure_name}\n"
+            f"Giocatori per squadra: {match.players_per_team}\n\n"
+            f"Conferma la tua disponibilità rispondendo a questo messaggio o su PlayOnApp:\n{link}"
+        )
+
+        match_whatsapp_message[match.id] = msg
         if match.matchmvpvote_set.exists():
             top_voted = (
                 match.matchmvpvote_set.values('voted_player')
@@ -274,6 +286,8 @@ def match_list(request):
         'match_has_comments': match_has_comments,
         'match_votation_expired': match_votation_expired,
         'match_votation_days_left': match_votation_days_left,
+        'match_whatsapp_message': match_whatsapp_message,
+
     })
 
 @login_required
