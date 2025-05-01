@@ -138,11 +138,15 @@
 
             <div class="col-lg-3 col-md-12 d-flex flex-column flex-md-row flex-lg-column gap-1 align-items-end align-items-md-center align-items-lg-end">
               {% if user == match.created_by %}
+                {% if not match.is_cancelled  and  match.score_team1 == None and match.score_team2 == None%}
+                <button class="btn btn-sm btn-outline-success w-100 w-md-50" data-bs-toggle="modal" data-bs-target="#whatsappModal{{ match.id }}">
+                  📤 Genera messaggio WhatsApp
+                </button>
+                
+                {% endif %}
                 {% if match.matchteamassignment_set.count >= match.players_per_team|add:match.players_per_team %}
                   {% if not match.is_cancelled %}
-                  <button class="btn btn-sm btn-outline-success w-100 w-md-50" data-bs-toggle="modal" data-bs-target="#whatsappModal{{ match.id }}">
-                    📤 Genera messaggio WhatsApp
-                  </button>
+                 
                   <button class="btn btn-sm btn-outline-success w-100 w-md-50 
                     {% if match.score_team1 is not None and match.score_team2 is not None %}disabled{% endif %}" 
                     onclick="loadResultForm({{ match.id }}, this)">📥 Inserisci risultato</button>
