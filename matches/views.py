@@ -105,7 +105,11 @@ def match_create(request):
                     message=f"Sei stato convocato per la partita del {match.date.strftime('%d/%m/%Y')} alle {match.time.strftime('%H:%M')}",
                     link=reverse('respond_to_convocation', args=[match.id, 'none'])
                 )
-                if player.user and player.user.email:
+                if (
+                    player.user and
+                    player.user.email and
+                    getattr(player.user, 'receive_emails', True)  # fallback su True per compatibilità
+                ):
                     try:
                         send_personalized_match_email(
                             to_email=player.user.email,

@@ -1,5 +1,6 @@
 from datetime import datetime
-from django.shortcuts import render, reverse
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render, reverse
 from django.contrib.auth.decorators import login_required
 from groups.models import Player
 from .models import Notification
@@ -70,3 +71,4 @@ def notify_manual_convocations(match, selected_player_ids):
                 message=f"Sei stato confermato tra i convocati per la partita del {match.date.strftime('%d/%m/%Y')} alle {match.time.strftime('%H:%M')}.",
                 link=reverse('respond_to_convocation', args=[match.id, 'disdici'])
             )
+

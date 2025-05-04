@@ -9,6 +9,6 @@ class UserAdmin(DefaultUserAdmin):
             'fields': ('role', 'birth_date', 'phone', 'player_role'),
         }),
     )
-    list_display = ('username', 'email', 'first_name', 'last_name', 'role','birth_date', 'player_role', 'is_staff')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'role','birth_date', 'player_role', 'is_staff', 'receive_emails', 'receive_whatsapp')
     list_filter = ('role', 'is_staff', 'is_superuser', 'is_active')
     search_fields = ('username', 'email', 'first_name', 'last_name')

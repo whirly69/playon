@@ -1,71 +1,43 @@
 {% load static %}
-<div class="bg-dark text-white vh-100 py-4">
-    <div class="ms-3 mt-4">
-      <h5>{{ user.username }}</h5>
-      
+<div class="bg-dark text-white d-flex flex-column justify-content-between py-3 px-3" style="min-height: 100vh;">
+  <div>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h6 class="mb-0 ps-2">{{ user.username }}</h6>
     </div>
-    <div class="text-muted small ms-3 mb-5">
-        {% comment %} <span class="badge bg-secondary">Ruolo in campo: {{ user.player_role|capfirst }}</span><br> {% endcomment %}
-        {% if user.is_authenticated %}
-            <span class="badge bg-secondary">{{ user.role|capfirst }}</span>
-            <span class="badge bg-secondary">Ruolo in campo: {{ user.player_role|capfirst }}</span><br>
-            <a href="{% url 'logout' %}" class="btn btn-outline-danger mt-2">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
-        {% else %}
-            <a href="{% url 'login' %}" class="btn btn-outline-light mt-2">
-                <i class="bi bi-box-arrow-in-right"></i> Login
-            </a>
-        {% endif %}
-    </div>
-    {% if user.role == 'organizer' %}
-
-        <a href="{% url 'structure_dashboard' %}" class="d-block px-3 py-2">
-            <i class="bi bi-building"></i> Strutture
-        </a>
-        <a href="{% url 'group_dashboard' %}" class="d-block px-3 py-2 d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-people-fill"></i> Gestione gruppi</span>
-            {% if group_count > 0 %}
-            <span class="badge bg-secondary">{{ group_count }}</span>
-            {% endif %}
-        </a>
-        <a href="{% url 'match_list' %}" class="d-block px-3 py-2"><i class="bi bi-calendar-event"></i>Gestione Partite</a>
-        <a href="{% url 'group_stats' %}" class="d-block px-3 py-2"><i class="bi bi-bar-chart-line"></i>Statistiche Generali</a>
-        <a href="{% url 'manage_requests' %}" class="d-block px-3 py-2 d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-inbox"></i> Richieste</span>
-            {% if pending_requests_count > 0 %}
-            <span class="badge bg-danger">{{ pending_requests_count }}</span>
-            {% endif %}
-        </a>
-        
-
-        <a href="{% url 'notification_list' %}" class="d-block px-3 py-2 d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-bell-fill"></i> Notifiche delle partite</span>
-        {% if unread_notifications > 0 %}
-            <span class="badge bg-warning text-dark">{{ unread_notifications }}</span>
-        {% endif %}
-        </a>
-        
-        
-    {% endif %}
-
-    {% if user.role == 'player' %}
-      <a href="{% url 'become_organizer' %}" class="d-block px-3 py-2"><i class="bi bi-person-gear"></i> Diventa organizzatore</a>
-      <a href="{% url 'available_groups' %}" class="d-block px-3 py-2"><i class="bi bi-search"></i> Gruppi disponibili</a>
-      <a href="{% url 'match_list' %}" class="d-block px-3 py-2"><i class="bi bi-calendar-check"></i> Le mie partite</a>
-      <a href="{% url 'group_stats' %}" class="d-block px-3 py-2"><i class="bi bi-bar-chart-line"></i>Statistiche Generali</a>
-      <a href="{% url 'notification_list' %}" class="d-block px-3 py-2 d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-bell-fill"></i> Notifiche delle partite</span>
-        {% if unread_notifications > 0 %}
-            <span class="badge bg-warning text-dark">{{ unread_notifications }}</span>
-        {% endif %}
-        </a>
-    {% endif %} 
     {% if user.is_authenticated %}
-        <a href="{% url 'contatto' %}" class="nav-link text-white px-3 py-2">
-            <i class="bi bi-envelope-fill me-2"></i> Contatta lo sviluppatore
+      <div class="ms-2 mb-3">
+        <span class="badge bg-secondary">{{ user.role|capfirst }}</span>
+        <span class="badge bg-secondary">Ruolo in campo: {{ user.player_role|capfirst }}</span>
+      </div>
+      <div class="ms-2 mb-4">
+        <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm w-100">
+          <i class="bi bi-box-arrow-right"></i> Logout
         </a>
+      </div>
+    {% else %}
+      <a href="{% url 'login' %}" class="btn btn-outline-light mt-2">
+          <i class="bi bi-box-arrow-in-right"></i> Login
+      </a>
     {% endif %}
-
+    <div class="d-flex flex-column gap-2">
+      {% if user.role == 'organizer' %}
+        <a href="{% url 'profile' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-person-circle me-1 text-white"></i> Il mio profilo</a>
+        <a href="{% url 'structure_dashboard' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-building me-1"></i> Strutture</a>
+        <a href="{% url 'group_dashboard' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-people-fill me-1"></i> Gestione gruppi{% if group_count > 0 %}<span class="badge bg-secondary ms-1">{{ group_count }}</span>{% endif %}</a>
+        <a href="{% url 'match_list' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-calendar-event me-1"></i> Gestione Partite</a>
+        <a href="{% url 'group_stats' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-bar-chart-line me-1"></i> Statistiche Generali</a>
+        <a href="{% url 'manage_requests' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-inbox me-1"></i> Richieste {% if pending_requests_count > 0 %}<span class="badge bg-danger ms-1">{{ pending_requests_count }}</span>{% endif %}</a>
+        <a href="{% url 'notification_list' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-bell-fill me-1"></i> Notifiche {% if unread_notifications > 0 %}<span class="badge bg-warning text-dark ms-1">{{ unread_notifications }}</span>{% endif %}</a>
+      {% endif %}
+      {% if user.role == 'player' %}
+        <a href="{% url 'profile' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-person-circle me-1 text-white"></i>Il mio profilo</a>
+        <a href="{% url 'become_organizer' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-person-gear me-1"></i> Diventa organizzatore</a>
+        <a href="{% url 'available_groups' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-people-fill me-1"></i> Gruppi disponibili</a>
+        <a href="{% url 'match_list' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-calendar-event me-1"></i> Le mie partite</a>
+        <a href="{% url 'group_stats' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-bar-chart-line me-1"></i>Statistiche Generali</a>
+        <a href="{% url 'notification_list' %}" class="text-white text-decoration-none ps-2"><i class="bi bi-bell-fill me-1"></i> Notifiche {% if unread_notifications > 0 %}<span class="badge bg-warning text-dark ms-1">{{ unread_notifications }}</span>{% endif %}</a>
+      {% endif %}
+      <a href="{% url 'contatto' %}" class="text-white text-decoration-none mt-5 ps-2"><i class="bi bi-envelope-fill me-2"></i>Contatta lo sviluppatore</a>
+    </div>
   </div>
-  
+</div>

@@ -11,14 +11,22 @@
       <div class="text-center mb-4">
         <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 80px;">
         <h3 class="mt-3 text-primary">Unisciti a <strong>PlayOn</strong></h3>
-        <p class="text-muted small">Crea il tuo profilo e gioca con la tua squadra!</p>
+        {% comment %} <p class="text-muted small">Crea il tuo profilo e gioca con la tua squadra!</p> {% endcomment %}
       </div>
-      <div class="card shadow-sm border-0">
+      <div class="card shadow-sm border-0" style="max-height: 80vh; overflow-y: auto;">
         <div class="card-body">
           <form method="post">
             {% csrf_token %}
             {{ form|crispy }}
             <button type="submit" class="btn btn-playon w-100 mt-3">Registrati</button>
+            <div class="form-text small mt-3 text-muted">
+              I tuoi dati saranno trattati nel rispetto del GDPR solo per gestire il tuo account e l’organizzazione delle partite.
+              <br>
+              Spuntando le opzioni sopra, accetti di ricevere comunicazioni via email o WhatsApp relative alle convocazioni.
+              <br>
+              Leggi la <a href="{% url 'privacy_policy' %}" target="_blank">privacy policy</a>.
+            </div>
+            
           </form>
           <div class="text-center mt-3">
             <span class="small">Hai già un account? <a href="{% url 'login' %}">Accedi</a></span>

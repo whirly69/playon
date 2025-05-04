@@ -15,3 +15,5 @@ class User(AbstractUser):
         verbose_name="Ruolo in campo",
         help_text="Es. Portiere, Difensore, ecc."
     )
+    receive_emails = models.BooleanField(default=True, verbose_name="Accetta email da PlayOn")
+    receive_whatsapp = models.BooleanField(default=False, verbose_name="Accetta messaggi WhatsApp")

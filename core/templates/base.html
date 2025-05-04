@@ -1,51 +1,49 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
   {% load static %}
-
   <meta charset="UTF-8">
   <title>{% block title %}PlayOn{% endblock %}</title>
-  
+
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="{% static 'css/playon.css' %}">
- 
 </head>
 <body class="bg-light">
   <div id="splash-screen" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-white d-md-none" style="z-index: 1050;">
     <img src="{% static 'img/splash_screen_playon.png' %}" alt="Caricamento PlayOn..." style="max-height: 150px;">
   </div>
-  <!-- Navbar -->
+
   {% include 'includes/navbar.html' %}
 
   <div class="container-fluid">
-    <div class="row">
-     
-      <!-- Sidebar Offcanvas su mobile, visibile direttamente su desktop -->
-      <div class="col-md-2 p-0">
-        <div class="d-md-block d-none">
+    <div class="row flex-nowrap">
+
+      <!-- Sidebar -->
+      <div class="d-none d-md-block col-md-2 p-0">
+        <div class="position-fixed bg-dark text-white d-flex flex-column justify-content-between"
+             style="top: 101px; bottom: 0; width: 16.666666%; z-index: 1030; ">
           {% include 'includes/sidebar.html' %}
         </div>
+      </div>
 
-        <!-- Offcanvas mobile -->
-        <div class="offcanvas offcanvas-start d-md-none text-bg-dark" tabindex="-1" id="mobileSidebar">
-          <div class="offcanvas-header">
-            <h5 class="offcanvas-title">Menu</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-          </div>
-          <div class="offcanvas-body p-0">
-            {% include 'includes/sidebar.html' %}
-          </div>
+      <!-- Offcanvas mobile -->
+      <div class="offcanvas offcanvas-start d-md-none text-bg-dark" tabindex="-1" id="mobileSidebar">
+        <div class="offcanvas-header">
+          <img src="{% static 'img/playon_logo.png' %}" alt="Caricamento PlayOn..." style="max-height: 64px;">
+          {% comment %} <h5 class="offcanvas-title">Menu</h5> {% endcomment %}
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0 overflow-y-auto">
+          {% include 'includes/sidebar.html' %}
         </div>
       </div>
 
       <!-- Main content -->
-      <main class="col-md-10 ms-sm-auto p-4">
-        
+      <main class="col-md-10" style="padding-top: 128px;">
         {% if messages %}
           <div class="container mt-3">
             {% for message in messages %}
@@ -57,8 +55,9 @@
           </div>
         {% endif %}
 
-        {% block content %}
-        {% endblock %}
+        <div class="container-fluid">
+          {% block content %}{% endblock %}
+        </div>
       </main>
     </div>
   </div>
@@ -73,7 +72,7 @@
     });
     window.addEventListener('load', function () {
       const splash = document.getElementById('splash-screen');
-      if (splash) splash.remove();  // invece di solo display: none
+      if (splash) splash.remove();
     });
   </script>
 </body>

@@ -174,8 +174,11 @@ if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 else:
     EMAIL_BACKEND = get_secret('EMAIL_BACKEND')
-    SENDGRID_API_KEY = get_secret('SENDGRID_API_KEY')
-    DEFAULT_FROM_EMAIL = get_secret('DEFAULT_FROM_EMAIL')
-    SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+    EMAIL_HOST = get_secret("EMAIL_HOST")
+    EMAIL_PORT = get_secret("EMAIL_PORT")
+    EMAIL_USE_TLS = get_secret("EMAIL_USE_TLS")
+    EMAIL_HOST_USER = get_secret("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = get_secret("EMAIL_HOST_PASSWORD")
+    DEFAULT_FROM_EMAIL = get_secret("DEFAULT_FROM_EMAIL")
     
 

@@ -1,33 +1,39 @@
-
 {% load static %}
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-  <a class="navbar-brand d-flex align-items-center" href="{% url 'homepage' %}">
-    <img src="{%  static 'img/playon_logo.png' %}" alt="PlayOn" height="64" class="me-2 ms-6">
-    
-  </a>
-  <button class="btn btn-outline-light d-md-none ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
-    <i class="bi bi-list"></i>
-  </button>
-  <div class="ms-auto">
-    {% if user.is_authenticated %}
-      {% if user.is_staff or user.is_superuser %}
-      <a href="/admin/" class="btn btn-outline-warning me-2">
-        <i class="bi bi-shield-lock-fill"></i> Admin
-      </a>
-      {% endif %}
-  
-      <a href="{% url 'notification_list' %}" class="btn btn-outline-light me-2 position-relative">
-        <i class="bi bi-bell-fill"></i> Notifiche
-        {% if unread_notifications %}
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            {{ unread_notifications }}
-            <span class="visually-hidden">Notifiche non lette</span>
-          </span>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+  <div class="container-fluid px-3">
+    <!-- Logo sempre visibile, allineato a sinistra come la sidebar -->
+    <a class="navbar-brand d-flex align-items-center" href="{% url 'homepage' %}">
+      <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" height="75" class="me-2">
+    </a>
+
+    <!-- Pulsante menu mobile -->
+    <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Contenuto a destra -->
+    <div class="ms-auto d-flex align-items-center">
+      {% if user.is_authenticated %}
+        {% if user.is_staff or user.is_superuser %}
+        <a href="/admin/" class="btn btn-outline-warning me-2">
+          <i class="bi bi-shield-lock-fill"></i> Admin
+        </a>
         {% endif %}
-      </a>
+        <a href="{% url 'notification_list' %}" class="btn btn-outline-light me-2 position-relative">
+          <i class="bi bi-bell-fill"></i> Notifiche
+          {% if unread_notifications %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {{ unread_notifications }}
+              <span class="visually-hidden">Notifiche non lette</span>
+            </span>
+          {% endif %}
+        </a>
+      {% endif %}
+
       
-    {% endif %}
-    <a href="{% url 'manuale' %}" class="btn btn-outline-light me-2">❓ Manuale</a>
-    <a href="{% url 'credits' %}" class="btn btn-outline-light">© Credits</a>
+
+      <a href="{% url 'manuale' %}" class="btn btn-outline-light me-2">❓ Manuale</a>
+      <a href="{% url 'credits' %}" class="btn btn-outline-light">© Credits</a>
+    </div>
   </div>
 </nav>

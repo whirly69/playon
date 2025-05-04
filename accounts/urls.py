@@ -1,5 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
 from . import views
 
 urlpatterns = [
@@ -23,4 +24,8 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='accounts/password_reset_complete.html'
     ), name='password_reset_complete'),
+
+    path("profile/", views.profile_view, name="profile"),
+    path("privacy-policy/", TemplateView.as_view(template_name="accounts/privacy_policy.html"), name="privacy_policy"),
+
 ]

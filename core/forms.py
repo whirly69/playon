@@ -4,6 +4,11 @@ class ContattoForm(forms.Form):
     TIPO_SCELTE = [
         ('bug', 'Segnalazione Bug'),
         ('feature', 'Richiesta Funzionalità'),
+        ('support', 'Richiesta Supporto'),
+        ('feedback', 'Feedback'),
+        ('complaint', 'Reclamo'),
+        ('privacy', 'Privacy'),
+        
         ('altro', 'Altro'),
     ]
 

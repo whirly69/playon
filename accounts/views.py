@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
-from .forms import LoginForm, RegisterForm
+from django.contrib import messages
+
+from groups.models import Player
+from .forms import LoginForm, RegisterForm, UserProfileForm
 from .models import User
 from django.contrib.auth.decorators import login_required
 
@@ -42,3 +45,23 @@ def become_organizer(request):
         user.save()
         return redirect('homepage')
     return render(request, 'accounts/become_organizer.html')
+
+@login_required
+def profile_view(request):
+    user = request.user
+
+    if request.method == "POST":
+        form = UserProfileForm(request.POST, instance=user)
+        if form.is_valid():
+            user = form.save()
+            # 🔁 Sincronizza nome/cognome/data con i profili Player
+            Player.objects.filter(user=user).update(
+                name=f"{user.first_name} {user.last_name}".strip(),
+                birth_date=user.birth_date
+            )
+            messages.success(request, "Profilo aggiornato con successo.")
+            return redirect("profile")
+    else:
+        form = UserProfileForm(instance=user)
+
+    return render(request, "accounts/profile.html", {"form": form})
