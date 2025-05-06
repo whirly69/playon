@@ -9,7 +9,7 @@
   <div class="text-center ms-2 mb-4">
   <img src="{% static 'img/playon_logo.png' %}" alt="PlayOn" style="max-height: 80px;">
   <h2 class="mt-2">Gruppi disponibili</h2>
-<ul>
+<ul class="list-unstyled text-center">
   {% for group in groups %}
     <li>
       {{ group.name }} creato da {{group.created_by.first_name}} {{group.created_by.last_name}}  {{group.created_at}}

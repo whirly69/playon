@@ -31,6 +31,7 @@ def notification_list(request):
                     "interagibile": False,
                     "disdici_fino": (match_dt - timedelta(hours=24)).strftime('%d/%m/%Y %H:%M')
                 }
+                
         else:
             match_times[n.id] = None
     # Marca come lette tutte le notifiche legate a partite giocate
@@ -72,3 +73,11 @@ def notify_manual_convocations(match, selected_player_ids):
                 link=reverse('respond_to_convocation', args=[match.id, 'disdici'])
             )
 
+@login_required
+def mark_notification_read(request, pk):
+    notif = get_object_or_404(Notification, id=pk, user=request.user)
+    if request.method == "POST":
+        notif.is_read = True
+        notif.save()
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "invalid"}, status=400)

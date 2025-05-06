@@ -151,6 +151,12 @@
                 </button>
                 
                 {% endif %}
+                {% if match.is_cancelled and match.created_by == request.user %}
+                  <button class="btn btn-sm btn-outline-danger w-100 w-md-50 mt-2" data-bs-toggle="modal" data-bs-target="#waCancelModal{{ match.id }}">
+                    📤 Comunica annullamento su WhatsApp
+                  </button>
+                {% endif %}
+
                 {% if match.matchteamassignment_set.count >= match.players_per_team|add:match.players_per_team %}
                   {% if not match.is_cancelled %}
                  
@@ -267,6 +273,28 @@
             </div>
           </div>
         </div>
+        <div class="modal fade" id="waCancelModal{{ match.id }}" tabindex="-1" aria-labelledby="waCancelLabel{{ match.id }}" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="waCancelLabel{{ match.id }}">Messaggio di annullamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+              </div>
+              <div class="modal-body">
+                <textarea id="msgWhatsappCancel{{ match.id }}" class="form-control" rows="4" readonly>La partita prevista per il {{ match.date|date:"d/m/Y" }} alle ore {{ match.time|time:"H:i" }} è stata ANNULLATA. Rispondi a questo messaggio per confermare. Ci vediamo alla prossima!
+                </textarea>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline-dark" onclick="copyWhatsappMessageCancel({{ match.id }})">📋 Copia messaggio</button>
+                <a id="waLinkCancel{{ match.id }}" class="btn btn-success disabled text-white-50" tabindex="-1" aria-disabled="true" target="_blank">
+                  <i class="bi bi-whatsapp"></i> Apri in WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        
         
       {% endfor %}
     </div>
@@ -373,7 +401,21 @@
     waLink.setAttribute("tabindex", "0");
     waLink.removeAttribute("aria-disabled");
   }
+  function copyWhatsappMessageCancel(matchId) {
+    const textarea = document.getElementById("msgWhatsappCancel" + matchId);
+    textarea.select();
+    textarea.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    alert("Messaggio copiato negli appunti!");
   
+    const encoded = encodeURIComponent(textarea.value);
+    const waLink = document.getElementById("waLinkCancel" + matchId);
+    waLink.href = "https://wa.me/?text=" + encoded;
+  
+    waLink.classList.remove("disabled", "text-white-50");
+    waLink.setAttribute("tabindex", "0");
+    waLink.removeAttribute("aria-disabled");
+  }
   
   document.addEventListener('DOMContentLoaded', function () {
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))

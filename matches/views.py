@@ -543,6 +543,23 @@ def cancel_match(request, match_id):
     match = get_object_or_404(Match, id=match_id, created_by=request.user)
     match.is_cancelled = True
     match.save()
+    players = Player.objects.filter(group=match.group, user__isnull=False).select_related("user")
+    message = f"La partita del {match.date.strftime('%d/%m/%Y')} è stata annullata."
+    subject = "Partita annullata"
+    from_email = settings.DEFAULT_FROM_EMAIL
+    for player in players:
+        # Notifica interna
+        create_or_update_notification(player.user, match, message, link=None)
+        # Invio email se desiderato
+        if player.user.receive_emails:
+            send_mail(
+                subject,
+                message,
+                from_email,
+                [player.user.email],
+                fail_silently=False
+            )
+
     return redirect('match_list')
 
 @login_required
