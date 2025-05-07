@@ -13,7 +13,9 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.template.loader import render_to_string
 from weasyprint import HTML
 from datetime import datetime, timedelta
+from accounts.models import User
 from groups.models import Group,Player
+from notifications.models import Notification
 from .forms import MatchForm
 from .models import Match, MatchConvocation, MatchPerformance, MatchTeamAssignment, MatchMVPVote, MatchComment
 from stats.models import PlayerStats
@@ -127,70 +129,7 @@ def match_create(request):
 
 
 
-# @login_required
-# def match_list(request):
-#     filter_option = request.GET.get('filter', 'all')
-#     user_groups = Group.objects.filter(Q(player__user=request.user) | Q(created_by=request.user)).distinct()
-#     matches = Match.objects.filter(
-#         Q(group__in=user_groups) | Q(is_public=True)
-#     ).distinct().order_by('-date', '-time')
-    
-    
-#     if filter_option == 'future':
-#         matches = matches.filter(date__gte=date.today())
-#     elif filter_option == 'my':
-#         matches = matches.filter(created_by=request.user)
 
-#     match_has_teams = {
-#         match.id: MatchTeamAssignment.objects.filter(match=match).exists()
-#         for match in matches
-#     }
-    
-#     # ✅ Calcola i marcatori per ciascuna squadra
-#     match_scorers_map = {}
-#     for match in matches:
-#         team1_ids = MatchTeamAssignment.objects.filter(match=match, team="team1").values_list("player_id", flat=True)
-#         team2_ids = MatchTeamAssignment.objects.filter(match=match, team="team2").values_list("player_id", flat=True)
-
-#         performances = MatchPerformance.objects.filter(match=match).select_related("player")
-#         scorers_team1 = [p for p in performances if p.player.id in team1_ids]
-#         scorers_team2 = [p for p in performances if p.player.id in team2_ids]
-
-#         match_scorers_map[match.id] = {
-#             "team1": scorers_team1,
-#             "team2": scorers_team2,
-#         }
-
-#     match_mvp_map = {}
-#     for match in matches:
-#         mvp_votes = MatchMVPVote.objects.filter(match=match)
-#         if mvp_votes.exists():
-#             top_voted = (
-#                 mvp_votes.values('voted_player')
-#                 .annotate(count=Count('id'))
-#                 .order_by('-count')
-#                 .first()
-#             )
-#             mvp_player = Player.objects.get(id=top_voted['voted_player'])
-#             match_mvp_map[match.id] = {
-#                 "name": mvp_player.name,
-#                 "votes": top_voted['count'],
-#             }
-
-#     # ✅ Calcola la presenza di commenti per ogni match (spostato fuori dal blocco MVP)
-#     match_has_comments = {
-#         match.id: MatchComment.objects.filter(match=match).exists()
-#         for match in matches
-#     }
-
-#     return render(request, 'matches/match_list.html', {
-#         'matches': matches,
-#         'match_has_teams': match_has_teams,
-#         'filter': filter_option,
-#         'match_scorers_map': match_scorers_map,
-#         'match_mvp_map': match_mvp_map,
-#         'match_has_comments': match_has_comments,
-#     })
 @login_required
 def match_list(request):
     # Recupera i gruppi dell'utente
@@ -500,6 +439,31 @@ def insert_result(request, match_id):
 
     # 🔁 Aggiorna statistiche globali
     update_player_stats_from_match(match)
+    # Messaggio personalizzato
+    organizer_name = f"{match.created_by.first_name} {match.created_by.last_name}"
+    message = (
+        f"⚽ Grande partita, speriamo ti sia divertito! "
+        f"{organizer_name} ha inserito il risultato finale. "
+        f"Adesso se vuoi, puoi votare gli altri partecipanti, l'MVP e lasciare un commento."
+    )
+    link = reverse("review_match_votes", args=[match.id])
+    # Step 1: tutti gli utenti connessi al gruppo
+    all_users = User.objects.filter(player__group=match.group).distinct()
+
+    # Ottieni solo i Player che hanno partecipato
+    assignments = MatchTeamAssignment.objects.select_related("player__user").filter(match=match)
+    assigned_user_ids = [
+        a.player.user.id for a in assignments if a.player.user
+    ]
+    # Step 3: utenti NON partecipanti
+    non_participants = all_users.exclude(id__in=assigned_user_ids)
+    # Step 4: marca come lette le notifiche della partita per questi utenti
+    Notification.objects.filter(match=match, user__in=non_participants).update(is_read=True)
+    # Step 5: Notifica solo agli utenti associati ai player partecipanti
+    for assignment in assignments:
+        player = assignment.player
+        if player.user:
+            create_or_update_notification(player.user, match, message, link)
 
     messages.success(request, "Risultato, marcatori e statistiche aggiornati con successo.")
     return redirect("match_list")

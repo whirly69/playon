@@ -10,9 +10,9 @@ from django.utils import timezone
 
 @login_required
 def notification_list(request):
-    notifications = Notification.objects.filter(user=request.user).exclude(
-    match__score_team1__isnull=False,
-    match__score_team2__isnull=False
+    notifications = Notification.objects.filter(
+        user=request.user,
+        is_read=False
     ).order_by("-created_at")
 
     match_times = {}
@@ -21,30 +21,18 @@ def notification_list(request):
     for n in notifications:
         if n.match:
             match_dt = timezone.make_aware(datetime.combine(n.match.date, n.match.time))
-            if match_dt - now > timedelta(hours=24):
-                match_times[n.id] = {
-                    "interagibile": True,
-                    "disdici_fino": (match_dt - timedelta(hours=24)).strftime('%d/%m/%Y %H:%M')
-                }
-            else:
-                match_times[n.id] = {
-                    "interagibile": False,
-                    "disdici_fino": (match_dt - timedelta(hours=24)).strftime('%d/%m/%Y %H:%M')
-                }
-                
+            match_times[n.id] = {
+                "interagibile": match_dt - now > timedelta(hours=24),
+                "disdici_fino": (match_dt - timedelta(hours=24)).strftime('%d/%m/%Y %H:%M')
+            }
         else:
             match_times[n.id] = None
-    # Marca come lette tutte le notifiche legate a partite giocate
-    Notification.objects.filter(
-        user=request.user,
-        is_read=False,
-        match__score_team1__isnull=False,
-        match__score_team2__isnull=False,
-    ).update(is_read=True)
+
     return render(request, "notifications/notification_list.html", {
         "notifications": notifications,
         "match_times": match_times
     })
+
 
 def create_or_update_notification(user, match, message, link):
     notif, created = Notification.objects.get_or_create(

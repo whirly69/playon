@@ -48,6 +48,13 @@
               {% if "riproponi" in n.link %}
                 <a href="{{ n.link }}" class="btn btn-sm btn-info ms-2">🔁 Riproponi</a>
               {% endif %}
+              {% if "review" in n.link %}
+                <form method="get" action="{{ n.link }}" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-primary ms-2">
+                    ✏️ Pronto per votare
+                  </button>
+                </form>
+              {% endif %}
             {% else %}
               <div class="text-muted small mt-2">⏳ Interazioni online disabilitate (entro 24h dalla partita)</div>
             {% endif %}

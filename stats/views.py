@@ -4,6 +4,7 @@ from django.db.models import Q,  Avg, Count, Sum
 from django.shortcuts import render, get_object_or_404, redirect
 from matches.models import Match, MatchPerformance, MatchMVPVote, MatchComment, MatchTeamAssignment
 from groups.models import Player, Group
+from notifications.models import Notification
 from stats.models import PlayerVote, PlayerStats
 
 
@@ -132,6 +133,8 @@ def review_match_votes(request, match_id):
                 defaults={"content": commento}
             )
         update_average_votes(match.group)
+        # ✅ Marca come letta la notifica solo ora
+        Notification.objects.filter(user=request.user, match=match).update(is_read=True)
         messages.success(request, "Voti registrati e media aggiornata correttamente.")
         return redirect("match_list")
 

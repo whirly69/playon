@@ -138,49 +138,6 @@ def select_player(request, request_id):
         'players': players,
     })
 
-# @login_required
-# def assign_player(request, request_id, player_id):
-#     player = get_object_or_404(Player, id=player_id, user__isnull=True)
-
-#     # Determina se è una richiesta normale o auto-associazione
-#     if request_id == 0:
-#         group_id = request.POST.get("group_id")
-#         group = get_object_or_404(player.group.__class__, id=group_id)
-
-#         if group.created_by != request.user or player.group != group:
-#             messages.error(request, "Non sei autorizzato.")
-#             return redirect("user_groups")
-
-#         # Auto-associazione organizzatore
-#         player.user = request.user
-
-#     else:
-#         join_request = get_object_or_404(GroupJoinRequest, id=request_id)
-
-#         if join_request.group.created_by != request.user or player.group != join_request.group:
-#             messages.error(request, "Accesso negato.")
-#             return redirect("manage_requests")
-
-#         # Associazione normale (altra richiesta)
-#         player.user = join_request.user
-#         join_request.status = 'accepted'
-#         join_request.save()
-
-#     # Aggiorna dati utente nel profilo Player
-#     if player.user.birth_date:
-#         player.birth_date = player.user.birth_date
-
-#     if player.user.player_role:
-#         try:
-#             role_instance = Role.objects.get(name=player.user.player_role)
-#             player.role = role_instance
-#         except Role.DoesNotExist:
-#             pass
-
-#     player.save()
-
-#     # Redirect diverso a seconda del contesto
-#     return redirect("user_groups" if request_id == 0 else "manage_requests")
 
 @login_required
 def assign_player(request, request_id):
