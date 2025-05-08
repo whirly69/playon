@@ -271,7 +271,7 @@ def manage_convocations(request, match_id):
                         conv.save()
 
             messages.success(request, "Convocazioni aggiornate con successo.")
-            return redirect('match_list')
+            return redirect('manage_convocations', match_id=match.id)
 
     convocations = MatchConvocation.objects.filter(match=match).select_related('player')
     convocated_ids = [c.player.id for c in convocations]

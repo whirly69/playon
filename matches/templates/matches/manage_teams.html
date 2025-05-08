@@ -2,7 +2,13 @@
 {% extends 'base.html' %}
 {% block content %}
 <h3>Gestione Squadre</h3>
-
+{% if request.user == match.created_by %}
+  <div class="text-end mb-3">
+    <a href="{% url 'manage_convocations' match.id %}" class="btn btn-outline-playon">
+      📋 Torna a gestione convocati
+    </a>
+  </div>
+{% endif %}
 <form method="post" id="save-teams-form">
   {% csrf_token %}
   <div class="d-flex justify-content-between mb-3">

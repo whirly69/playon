@@ -4,7 +4,13 @@
 {% block content %}
 <div class="container py-4">
   <h2 class="mb-4">Gestione convocazioni – {{ match.date }} {{ match.time }}</h2>
-
+  {% if request.user == match.created_by %}
+    <div class="text-end mb-3">
+      <a href="{% url 'manage_teams' match.id %}" class="btn btn-outline-playon">
+        ⚙️ Vai alla gestione squadre
+      </a>
+    </div>
+  {% endif %}
   <div class="mb-4">
     <div class="progress mb-2">
       <div id="progress-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%">
