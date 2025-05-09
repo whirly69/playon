@@ -1,4 +1,6 @@
 
+from django.core.mail import send_mail
+from django.conf import settings
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -179,6 +181,18 @@ def assign_player(request, request_id):
         player.birth_date = player.user.birth_date
         join_request.status = 'accepted'
         join_request.save()
+        send_mail(
+            subject="Richiesta accettata – Benvenuto nel gruppo!",
+            message=(
+                f"Ciao {join_request.user.first_name},\n\n"
+                f"La tua richiesta di adesione al gruppo \"{join_request.group.name}\" è stata accettata!\n"
+                f"Puoi ora partecipare alle partite, ricevere notifiche e votare dopo ogni match.\n\n"
+                "A presto su PlayOn!"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[join_request.user.email],
+            fail_silently=False
+        )
 
     player.save()
 
@@ -413,5 +427,17 @@ def create_and_assign_player(request, request_id):
 
         join_request.status = 'accepted'
         join_request.save()
+        send_mail(
+            subject="Richiesta accettata – Benvenuto nel gruppo!",
+            message=(
+                f"Ciao {join_request.user.first_name},\n\n"
+                f"La tua richiesta di adesione al gruppo \"{join_request.group.name}\" è stata accettata!\n"
+                f"Puoi ora partecipare alle partite, ricevere notifiche e votare dopo ogni match.\n\n"
+                "A presto su PlayOn!"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[join_request.user.email],
+            fail_silently=False
+        )
 
     return redirect('manage_requests')
