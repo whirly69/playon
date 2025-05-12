@@ -230,11 +230,8 @@
                 
                 
                 {% endif %}
-                {% if match_has_comments|get_item:match.id %}
-                            <a href="{% url 'match_comments' match.id %}" class="btn btn-sm btn-outline-secondary w-100 w-md-50 ">
-                              💬 Mostra commenti
-                            </a>
-                {% endif %}
+                
+
               {% endif %}
             
                 
@@ -246,6 +243,14 @@
                     {% if match.score_team1 is not None and match.score_team2 is not None %}disabled{% endif %}">🧩 Gestisci squadre</a>
                   {% endif %}
                 {% endif %}
+                {% if match.score_team1 != None and match.score_team2 != None and match_has_comments|get_item:match.id %}
+                  {% if user == match.created_by or user|is_confirmed_convocated:match %}
+                    <a href="{% url 'match_comments' match.id %}" class="btn btn-sm btn-outline-secondary w-100 w-md-50 ">
+                      💬 Mostra commenti
+                    </a>
+                  {% endif %}
+                {% endif %}
+
             </div>
           </div>
         </div>
