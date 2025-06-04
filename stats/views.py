@@ -166,8 +166,9 @@ def player_stats_detail(request, player_id):
         group__id=group_id,
         is_cancelled=False,
         score_team1__isnull=False,
-        score_team2__isnull=False,
+        score_team2__isnull=False
     )
+    
 
     # Trova solo i match dove il giocatore era assegnato
     assignments = MatchTeamAssignment.objects.filter(player=player, match__in=matches)
@@ -176,7 +177,7 @@ def player_stats_detail(request, player_id):
     match_ids = assignments.values_list('match_id', flat=True)
 
     # Ora carichi SOLO le partite dove lui ha partecipato
-    matches = matches.filter(id__in=match_ids)
+    matches = matches.filter(id__in=match_ids).order_by("-date")
 
     performances = MatchPerformance.objects.filter(player=player, match__in=matches)
     votes = PlayerVote.objects.filter(voted_player=player, match__in=matches).select_related("voter")
