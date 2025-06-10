@@ -168,7 +168,7 @@ def match_list(request):
 
     for match in matches:
         match_has_teams[match.id] = match.matchteamassignment_set.exists()
-
+        own_goals = request.session.get(f"own_goals_match_{match.id}", {"team1": 0, "team2": 0})
         team1_players = [a.player.id for a in match.matchteamassignment_set.all() if a.team == "team1"]
         team2_players = [a.player.id for a in match.matchteamassignment_set.all() if a.team == "team2"]
 
@@ -178,6 +178,7 @@ def match_list(request):
         match_scorers_map[match.id] = {
             "team1": scorers_team1,
             "team2": scorers_team2,
+            "own_goals": own_goals
         }
         structure_name = match.structure.name if match.structure else "da definire"
         link = f"https://playonapp.it/notification"
@@ -423,11 +424,28 @@ def insert_result(request, match_id):
         return redirect("match_list")
 
     # Conteggio goal per giocatore (marcatori da entrambi i campi)
-    marcatori = request.POST.getlist("marcatore_team1[]") + request.POST.getlist("marcatore_team2[]")
-    goal_counts = defaultdict(int)
-    for pid in marcatori:
-        goal_counts[int(pid)] += 1
+    # marcatori = request.POST.getlist("marcatore_team1[]") + request.POST.getlist("marcatore_team2[]")
+    # goal_counts = defaultdict(int)
+    # for pid in marcatori:
+    #     if pid != "own_goal":
+    #         goal_counts[int(pid)] += 1
+    team1_marcatori = request.POST.getlist("marcatore_team1[]")
+    team2_marcatori = request.POST.getlist("marcatore_team2[]")
 
+    goal_counts = defaultdict(int)
+    own_goals_counts = {"team1": 0, "team2": 0}
+
+    for pid in team1_marcatori:
+        if pid == "own_goal":
+            own_goals_counts["team2"] += 1  # autorete team1 = punto per team2
+        else:
+            goal_counts[int(pid)] += 1
+
+    for pid in team2_marcatori:
+        if pid == "own_goal":
+            own_goals_counts["team1"] += 1  # autorete team2 = punto per team1
+        else:
+            goal_counts[int(pid)] += 1
     # Pulisce vecchi dati e salva solo chi ha segnato
     MatchPerformance.objects.filter(match=match).delete()
     for pid, num_goals in goal_counts.items():
@@ -436,7 +454,8 @@ def insert_result(request, match_id):
             player_id=pid,
             goals=num_goals
         )
-
+    # 🧠 Salviamo le autoreti in sessione per il riepilogo
+    request.session[f"own_goals_match_{match.id}"] = own_goals_counts
     # 🔁 Aggiorna statistiche globali
     update_player_stats_from_match(match)
     # Messaggio personalizzato
@@ -758,56 +777,7 @@ def salva_squadre_in_sessione(request, match_id):
     request.session[f"voti_match_{match_id}"] = data.get("votes", {})
     return JsonResponse({"ok": True})
 
-# @login_required
-# @require_GET
-# def export_teams_pdf(request, match_id):
-#     match = get_object_or_404(Match, id=match_id)
-#     if not (request.user == match.created_by or MatchConvocation.objects.filter(match=match, player__user=request.user, status='confirmed').exists()):
-#         return HttpResponseForbidden("Accesso negato")
 
-#     assignments = MatchTeamAssignment.objects.filter(match=match).select_related('player__role')
-#     votes = request.session.get(f"voti_match_{match_id}", {})
-
-#     team1 = []
-#     team2 = []
-
-#     for a in assignments:
-#         a.player.vote = votes.get(str(a.player.id), 3)  # default voto 3
-#         if a.team == "team1":
-#             team1.append(a.player)
-#         elif a.team == "team2":
-#             team2.append(a.player)
-
-#     def summarize(team):
-#         role_count = Counter()
-#         total_score = 0
-#         for p in team:
-#             if p.role:
-#                 role_count[p.role.name] += 1
-#             total_score += p.vote
-#         return {
-#             "count": len(team),
-#             "role_count": dict(role_count),
-#             "total_score": total_score
-#         }
-
-#     summary1 = summarize(team1)
-#     summary2 = summarize(team2)
-
-#     html_string = render_to_string("matches/teams_pdf.html", {
-#         "match": match,
-#         "team1": team1,
-#         "team2": team2,
-#         "summary1": summary1,
-#         "summary2": summary2,
-#         "generated_by": request.user.get_full_name() or request.user.username
-#     })
-
-#     base_url = os.path.join(settings.BASE_DIR, 'static')
-#     pdf_file = HTML(string=html_string, base_url=base_url).write_pdf()
-#     response = HttpResponse(pdf_file, content_type="application/pdf")
-#     response["Content-Disposition"] = f'filename="formazioni_{match.id}.pdf"'
-#     return response
 
 @login_required
 def match_comments(request, match_id):

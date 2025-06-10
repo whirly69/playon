@@ -91,7 +91,11 @@
                           {% if perf.goals > 0 %}
                             <li>{{ perf.player.name }} ×{{ perf.goals }}</li>
                           {% endif %}
+                          
                         {% endfor %}
+                        {% if scorers.own_goals.team2 > 0 %}
+                            <li><em>Autorete ×{{ scorers.own_goals.team2 }}</em></li>
+                        {% endif %}
                       {% endwith %}
                       
                     </ul>
@@ -126,7 +130,11 @@
                           {% if perf.goals > 0 %}
                             <li>{{ perf.player.name }} ×{{ perf.goals }}</li>
                           {% endif %}
+                          
                         {% endfor %}
+                        {% if scorers.own_goals.team1 > 0 %}
+                            <li><em>Autorete ×{{ scorers.own_goals.team1 }}</em></li>
+                        {% endif %}
                       {% endwith %}
                     </ul>
                   </div>
@@ -381,6 +389,12 @@
       const select = document.createElement('select');
       select.name = `marcatore_${team}[]`;
       select.className = 'form-select form-select-sm my-1';
+      const ownGoalOpt = document.createElement('option');
+      // Aggiungi opzione per autorete
+      ownGoalOpt.value = 'own_goal';
+      ownGoalOpt.textContent = '🧍 Autorete';
+      select.appendChild(ownGoalOpt);
+      // Fine sezione autorete
       players.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p.id;
