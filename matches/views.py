@@ -194,19 +194,30 @@ def match_list(request):
         )
 
         match_whatsapp_message[match.id] = msg
-        if match.matchmvpvote_set.exists():
-            top_voted = (
-                match.matchmvpvote_set.values('voted_player')
-                .annotate(count=Count('id'))
-                .order_by('-count')
-                .first()
-            )
-            if top_voted:
-                mvp_player = Player.objects.get(id=top_voted['voted_player'])
-                match_mvp_map[match.id] = {
-                    "name": mvp_player.name,
-                    "votes": top_voted['count'],
-                }
+        mvp_votes = (
+            match.matchmvpvote_set
+            .values('voted_player', 'voted_player__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        if mvp_votes:
+            match_mvp_map[match.id] = list(mvp_votes)
+
+        
+        # if match.matchmvpvote_set.exists():
+        #     top_voted = (
+        #         match.matchmvpvote_set.values('voted_player')
+        #         .annotate(count=Count('id'))
+        #         .order_by('-count')
+        #         .first()
+        #     )
+        #     if top_voted:
+        #         mvp_player = Player.objects.get(id=top_voted['voted_player'])
+        #         match_mvp_map[match.id] = {
+        #             "name": mvp_player.name,
+        #             "votes": top_voted['count'],
+        #         }
 
         match_has_comments[match.id] = match.matchcomment_set.exists()
 

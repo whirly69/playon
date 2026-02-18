@@ -138,13 +138,22 @@
                       {% endwith %}
                     </ul>
                   </div>
-                  {% with match_mvp_map|get_item:match.id as mvp %}
-                          {% if mvp %}
-                            <div class="mt-2 small text-success">
-                              🏆 MVP: <strong>{{ mvp.name }}</strong> ({{ mvp.votes }} voti)
-                            </div>
-                          {% endif %}
-                        {% endwith %}
+                  {% with match_mvp_map|get_item:match.id as mvps %}
+                    {% if mvps %}
+                      <div class="mt-2 small text-success">
+                        🏆 MVP votati:
+                        <ul class="list-unstyled mb-0">
+                          {% for mvp in mvps %}
+                            <li>
+                              <strong>{{ mvp.voted_player__name }}</strong>
+                              ({{ mvp.count }} voti)
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    {% endif %}
+                  {% endwith %}
+
                 </div>
               {% else %}
                 <div id="result-form-container-{{ match.id }}"></div>
