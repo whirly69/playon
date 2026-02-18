@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.templatetags.static import static
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden, JsonResponse
-from django.db.models import Count, Q, Prefetch
+from django.db.models import Count, Q, Case, When, IntegerField, Value
 from django.shortcuts import render, redirect,get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 from datetime import datetime, timedelta
 from accounts.models import User
+#from click import group
 from groups.models import Group,Player
 from notifications.models import Notification
 from .forms import MatchForm
@@ -237,7 +238,13 @@ def match_list(request):
 @login_required
 def manage_convocations(request, match_id):
     match = get_object_or_404(Match, id=match_id, created_by=request.user)
-    players = Player.objects.filter(group=match.group).order_by('name')
+    players = Player.objects.filter(group=match.group).annotate(
+        has_user=Case(
+            When(user__isnull=False, then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField()
+        )
+    ).order_by('has_user', 'name')
     now = timezone.now()
     match_dt = timezone.make_aware(datetime.combine(match.date, match.time))
     time_left = match_dt - now
