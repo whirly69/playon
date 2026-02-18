@@ -1,3 +1,4 @@
+import math
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q,  Avg, Count, Sum
@@ -27,6 +28,10 @@ def group_stats_view(request):
         score_team2__isnull=False,
         is_cancelled=False
     )
+    import math
+
+    total_matches = matches.count()
+    min_required = math.ceil(total_matches * 0.5) if total_matches > 0 else 0
     # print("DEBUG STAMPA TUTTI I MATCH:")
     # for match in Match.objects.all():
     #     print(f"ID: {match.id}, group_id: {match.group_id}, cancelled: {match.is_cancelled}, score1: {match.score_team1}, score2: {match.score_team2}")
@@ -49,7 +54,12 @@ def group_stats_view(request):
         group_id = user_groups.first().id
 
     player_stats = PlayerStats.objects.select_related("player", "player__role") \
-        .filter(player__group_id=group_id, player__isnull=False)
+        .filter(
+            player__group_id=group_id,
+            player__isnull=False,
+            presences__gte=min_required   # 🔥 filtro 50%
+        )
+
 
 
     if role_filter:
