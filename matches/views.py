@@ -501,7 +501,7 @@ def insert_result(request, match_id):
         player = assignment.player
         if player.user:
             create_or_update_notification(player.user, match, message, link)
-
+    MatchConvocation.objects.filter(match=match).delete()
     messages.success(request, "Risultato, marcatori e statistiche aggiornati con successo.")
     return redirect("match_list")
 
@@ -560,7 +560,7 @@ def cancel_match(request, match_id):
                 [player.user.email],
                 fail_silently=False
             )
-
+    MatchConvocation.objects.filter(match=match).delete()
     return redirect('match_list')
 
 @login_required
