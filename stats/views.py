@@ -106,12 +106,9 @@ def review_match_votes(request, match_id):
     #     matchconvocation__match=match,
     #     matchconvocation__status='confirmed'
     # ).exclude(id=current_player.id)
-    assignments = MatchTeamAssignment.objects.filter(match=match).select_related("player")
-
-    convocated_players = [
-        a.player for a in assignments
-        if a.player.id != current_player.id
-    ]
+    convocated_players = Player.objects.filter(
+        matchteamassignment__match=match
+    ).exclude(id=current_player.id).distinct()
 
     existing_votes_qs = PlayerVote.objects.filter(match=match, voter=request.user)
     existing_votes = {vote.voted_player.id: vote.vote for vote in existing_votes_qs}
