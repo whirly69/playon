@@ -102,10 +102,16 @@ def review_match_votes(request, match_id):
         messages.error(request, "Non hai accesso a questa pagina.")
         return redirect("match_list")
 
-    convocated_players = Player.objects.filter(
-        matchconvocation__match=match,
-        matchconvocation__status='confirmed'
-    ).exclude(id=current_player.id)
+    # convocated_players = Player.objects.filter(
+    #     matchconvocation__match=match,
+    #     matchconvocation__status='confirmed'
+    # ).exclude(id=current_player.id)
+    assignments = MatchTeamAssignment.objects.filter(match=match).select_related("player")
+
+    convocated_players = [
+        a.player for a in assignments
+        if a.player.id != current_player.id
+    ]
 
     existing_votes_qs = PlayerVote.objects.filter(match=match, voter=request.user)
     existing_votes = {vote.voted_player.id: vote.vote for vote in existing_votes_qs}
