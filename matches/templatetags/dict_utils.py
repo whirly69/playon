@@ -1,5 +1,5 @@
 from django import template
-from matches.models import MatchConvocation
+from matches.models import MatchConvocation, MatchTeamAssignment
 from django.utils.safestring import mark_safe
 register = template.Library()
 
@@ -23,6 +23,21 @@ def get_player_id_for_group(user, group):
 def str_replace(value, args):
     old, new = args.split(',')
     return value.replace(old, new)
+# @register.filter
+# def is_confirmed_convocated(user, match):
+#     return MatchConvocation.objects.filter(match=match, player__user=user, status='confirmed').exists()
 @register.filter
 def is_confirmed_convocated(user, match):
-    return MatchConvocation.objects.filter(match=match, player__user=user, status='confirmed').exists()
+    # Se la partita è giocata → controlla le squadre
+    if match.score_team1 is not None and match.score_team2 is not None:
+        return MatchTeamAssignment.objects.filter(
+            match=match,
+            player__user=user
+        ).exists()
+
+    # Se NON è giocata → controlla convocazioni
+    return MatchConvocation.objects.filter(
+        match=match,
+        player__user=user,
+        status='confirmed'
+    ).exists()
